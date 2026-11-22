@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { OPERATION_LABEL } from '../lib/accounts'
 import { byAccount, byMonth, cashSet, entryDC, totals, type PeriodSum } from '../lib/calc'
 import { fmtDate, fmtMonth, MONTHS_AR, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
-import { applyAugustSplit, cloudEnabled, findCombinedEntry1, useApp } from '../lib/store'
+import { applyCorrections, cloudEnabled, pendingCorrections, useApp } from '../lib/store'
 import type { Entry } from '../lib/types'
 import { expenseItems, monthSums, workerMonths } from '../lib/expenses'
 import { IconBook, IconFile, IconPlus, IconWallet } from '../ui/icons'
@@ -92,7 +92,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {findCombinedEntry1(entries) && <AugustCard />}
+        <CorrectionsCard />
 
         <div className="quick-tiles">
           <button className="quick-tile" onClick={() => go(`/expenses?m=${lastExpMonth?.key ?? thisMonthKey}`)}>
@@ -301,39 +301,68 @@ function niceMax(v: number) {
   return m * p
 }
 
-function AugustCard() {
+function CorrectionsCard() {
+  const { entries } = useApp()
+  const [dismissed, setDismissed] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dismissed-fixes') ?? '[]')
+    } catch {
+      return []
+    }
+  })
+  const list = pendingCorrections(entries, dismissed)
+  if (!list.length) return null
   const apply = async () => {
     const ok = await confirmDialog({
-      title: 'تفصيل القيد 1 حسب أوراق أغسطس؟',
+      title: 'تطبيق تصحيحات الدفتر؟',
       body: (
-        <>
-          القيد 1 (276,066 ريال بتاريخ 7 سبتمبر) يتقسّم على تواريخه الحقيقية من الأوراق:
-          <br />12 أغسطس عربون 5,000 · 13 أغسطس تحويل الحلال وأعلاف 140,091 · 27 أغسطس 34 رأس 46,960 · 29 أغسطس علاج وشعير وخيام 3,660 · والباقي 80,355 يبقى في 7 سبتمبر.
-          <br />
-          <b>المجموع نفسه بدون أي تكرار.</b>
-        </>
+        <ul style={{ paddingInlineStart: 18, margin: 0 }}>
+          {list.map((c) => (
+            <li key={c.id} style={{ marginBottom: 6 }}>
+              <b>{c.title}:</b> {c.detail}
+            </li>
+          ))}
+        </ul>
       ),
       confirm: 'تطبيق',
     })
     if (!ok) return
     try {
-      const n = await applyAugustSplit()
-      toast(`تم · أُضيف ${n} قيود لشهر أغسطس`)
+      await applyCorrections(list.map((c) => c.id))
+      toast('تم تطبيق التصحيحات')
     } catch (e) {
       toast((e as Error).message, 'err')
+    }
+  }
+  const skip = () => {
+    const next = [...dismissed, 'ahmed']
+    setDismissed(next)
+    try {
+      localStorage.setItem('dismissed-fixes', JSON.stringify(next))
+    } catch {
+      /* */
     }
   }
   return (
     <section className="card" style={{ borderInlineStart: '4px solid var(--caramel)' }}>
       <h2 className="card-title" style={{ marginBottom: 6 }}>
-        أوراق أغسطس جاهزة
+        تصحيحات جاهزة ({list.length})
       </h2>
-      <p className="muted small" style={{ marginTop: 0 }}>
-        الأوراق المكتوبة باليد هي تفاصيل القيد 1. بتطبيقها يظهر شهر أغسطس في المصروفات بتواريخه الصحيحة.
-      </p>
-      <button className="btn btn-primary btn-sm" onClick={apply}>
-        مراجعة وتطبيق
-      </button>
+      <ul className="muted small" style={{ margin: '0 0 12px', paddingInlineStart: 18 }}>
+        {list.map((c) => (
+          <li key={c.id}>{c.title}</li>
+        ))}
+      </ul>
+      <div className="row">
+        <button className="btn btn-primary btn-sm" onClick={apply}>
+          مراجعة وتطبيق
+        </button>
+        {list.some((c) => c.id === 'ahmed') && list.length === 1 && (
+          <button className="btn btn-ghost btn-sm" onClick={skip}>
+            مسجّل عندي
+          </button>
+        )}
+      </div>
     </section>
   )
 }

@@ -228,27 +228,90 @@ export async function updateSettings(patch: Partial<Settings>) {
   setState({ settings })
 }
 
-// ───────────── تفصيل القيد 1 حسب أوراق أغسطس ─────────────
+// ───────────── تصحيحات الأب على الدفتر ─────────────
 
-/** يجد القيد 1 الأصلي (276,066 بتاريخ 7 سبتمبر) إن كان مستورداً بصيغته المجمّعة */
+const sumDebit = (e: Entry) => e.lines.reduce((s, l) => s + l.debit, 0)
+
+/** القيد 1 الأصلي بصيغته المجمّعة (276,066 بتاريخ 7 سبتمبر) */
 export function findCombinedEntry1(entries: Entry[] = state.entries): Entry | undefined {
   return entries.find(
-    (e) =>
-      !e.deleted &&
-      e.date === '2026-09-07' &&
-      e.lines.reduce((s, l) => s + l.debit, 0) === 276_066_00 &&
-      e.lines.some((l) => l.accountId === 'livestock' && l.debit === 198_000_00),
+    (e) => !e.deleted && e.date === '2026-09-07' && sumDebit(e) === 276_066_00 && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 198_000_00),
   )
 }
 
-/** يقسم القيد 1 على تواريخه الحقيقية — نفس المجموع، بدون تكرار */
+/** قيد «باقي التجهيز» الذي فيه 50,000 زائدة في قيمة الحلال */
+export function findExtra50k(entries: Entry[] = state.entries): Entry | undefined {
+  return entries.find((e) => !e.deleted && e.date === '2026-09-07' && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 50_000_00))
+}
+
+export function hasAhmed1000(entries: Entry[] = state.entries): boolean {
+  return entries.some((e) => !e.deleted && e.date >= '2026-11-15' && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00) && e.description.includes('أحمد'))
+}
+
+export interface Correction {
+  id: 'split' | 'extra50k' | 'ahmed'
+  title: string
+  detail: string
+}
+
+export function pendingCorrections(entries: Entry[] = state.entries, dismissed: string[] = []): Correction[] {
+  const out: Correction[] = []
+  if (findCombinedEntry1(entries))
+    out.push({
+      id: 'split',
+      title: 'تفصيل القيد 1 على تواريخ أغسطس وتصحيح قيمة الحلال',
+      detail: 'عربون 5,000 (12/8) · تحويل 97,420 (13/8) · 34 رأس 45,580 (27/8) · والباقي في 7/9. قيمة الحلال تصير 148,000 بدل 198,000.',
+    })
+  else if (findExtra50k(entries))
+    out.push({ id: 'extra50k', title: 'تصحيح قيمة الحلال', detail: 'حذف 50,000 الزائدة: قيمة الحلال 102,420 + 45,580 = 148,000 وليست 198,000.' })
+  if (!hasAhmed1000(entries) && !dismissed.includes('ahmed') && entries.length > 0)
+    out.push({ id: 'ahmed', title: 'حساب أحمد 1,000 ريال', detail: 'من 10 جمادى الآخرة إلى 10 رجب 1448 (يُسجّل بتاريخ 20 نوفمبر).' })
+  return out
+}
+
+/** حذف سطر الـ 50,000 من قيد مع تعديل الصندوق المقابل — القيد يبقى متوازناً */
+function without50k(e: Entry): EntryDraft {
+  let removed = false
+  const lines = e.lines
+    .filter((l) => {
+      if (!removed && l.accountId === 'livestock' && l.debit === 50_000_00) {
+        removed = true
+        return false
+      }
+      return true
+    })
+    .map((l) => (l.accountId === 'cash' && l.credit > 0 ? { ...l, credit: l.credit - 50_000_00 } : l))
+  return { date: e.date, description: e.description.replace('، باقي قيمة الحلال', '').replace('باقي تجهيز المشروع', 'تجهيز المشروع'), type: e.type, lines, flagged: e.flagged, flagNote: e.flagNote }
+}
+
+export async function applyCorrections(ids: Correction['id'][]): Promise<number> {
+  const seed = await import('./seed')
+  let n = 0
+  if (ids.includes('split')) {
+    const e1 = findCombinedEntry1()
+    if (e1) {
+      await updateEntry(e1.id, { ...seed.AUGUST_REMAINDER, number: undefined })
+      for (const d of seed.AUGUST_SPLIT) await addEntry({ ...d, number: undefined }, 'import')
+      n += 1
+    }
+  }
+  if (ids.includes('extra50k')) {
+    const e = findExtra50k()
+    if (e) {
+      await updateEntry(e.id, without50k(e))
+      n += 1
+    }
+  }
+  if (ids.includes('ahmed') && !hasAhmed1000()) {
+    await addEntry({ ...seed.AHMED_1000, number: undefined })
+    n += 1
+  }
+  return n
+}
+
+/** للتوافق: تطبيق تفصيل أغسطس فقط */
 export async function applyAugustSplit(): Promise<number> {
-  const e1 = findCombinedEntry1()
-  if (!e1) return 0
-  const { AUGUST_SPLIT, AUGUST_REMAINDER } = await import('./seed')
-  const total = [...AUGUST_SPLIT, AUGUST_REMAINDER].reduce((s, d) => s + d.lines.reduce((x, l) => x + l.debit, 0), 0)
-  if (total !== 276_066_00) throw new Error('مجموع التفصيل لا يطابق القيد 1')
-  await updateEntry(e1.id, { ...AUGUST_REMAINDER, number: undefined })
-  for (const d of AUGUST_SPLIT) await addEntry({ ...d, number: undefined }, 'import')
-  return AUGUST_SPLIT.length
+  if (!findCombinedEntry1()) return 0
+  await applyCorrections(['split'])
+  return 4
 }

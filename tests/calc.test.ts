@@ -33,30 +33,30 @@ describe('المبالغ', () => {
 
 describe('دفتر مشروع الحلال الأصلي', () => {
   const cash = cashSet(DEFAULT_ACCOUNTS)
-  it('كل القيود متوازنة والمجموع 297,938 (مع تفصيل أغسطس)', () => {
+  it('كل القيود متوازنة والمجموع 248,938 بعد التصحيح', () => {
     const entries = toEntries()
     const t = totals(entries, cash)
     expect(t.debit).toBe(ORIGINAL_TOTAL_HALALA)
     expect(t.credit).toBe(0)
     expect(t.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(t.count).toBe(18)
+    expect(t.count).toBe(19)
     expect(t.ledgerBalanced).toBe(true)
     expect(t.cashBalance).toBe(-ORIGINAL_TOTAL_HALALA)
   })
   it('ملخص الحسابات مطابق للترحيل في الدفتر', () => {
     const sums = Object.fromEntries(byAccount(toEntries(), DEFAULT_ACCOUNTS).map((a) => [a.account.id, a.balance / 100]))
     expect(sums).toMatchObject({
-      livestock: 198000,
+      livestock: 148000,
       feed: 52569,
       well: 18050,
       rent: 10000,
       equipment: 7053,
-      wages: 5953,
+      wages: 6953,
       vet: 3315,
       transport: 2573,
       maintenance: 320,
       misc: 105,
-      cash: -297938,
+      cash: -248938,
     })
   })
   it('الرصيد التراكمي ينتهي بالمجموع', () => {

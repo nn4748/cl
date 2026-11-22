@@ -184,7 +184,7 @@ describe('التخزين المحلي', () => {
 })
 
 describe('تفصيل أوراق أغسطس', () => {
-  it('يقسم القيد 1 المجمّع بدون تغيير المجموع أو أرصدة الحسابات', async () => {
+  it('يقسم القيد 1 ويصحح قيمة الحلال إلى 148,000', async () => {
     const a = await device()
     const L = (accountId: string, r: number) => ({ accountId, debit: r * 100, credit: 0 })
     const lines = [L('livestock', 198000), L('transport', 1800), L('rent', 10000), L('well', 18050), L('equipment', 3510), L('feed', 41706), L('vet', 3000)]
@@ -194,9 +194,29 @@ describe('تفصيل أوراق أغسطس', () => {
     expect(await a.store.applyAugustSplit()).toBe(4)
     const st = a.store.getState()
     expect(st.entries.filter((e) => !e.deleted)).toHaveLength(5)
-    expect(totals(st.entries, cashSet(st.accounts)).debit).toBe(27606600)
-    expect(byAccount(st.entries, st.accounts).map((x) => [x.account.id, x.balance]).sort()).toEqual(before.sort())
+    void before
+    expect(totals(st.entries, cashSet(st.accounts)).debit).toBe(22606600)
+    const bal = Object.fromEntries(byAccount(st.entries, st.accounts).map((x) => [x.account.id, x.balance / 100]))
+    expect(bal).toMatchObject({ livestock: 148000, transport: 1800, rent: 10000, well: 18050, equipment: 3510, feed: 41706, vet: 3000, cash: -226066 })
     expect(a.store.findCombinedEntry1()).toBeUndefined()
     expect(await a.store.applyAugustSplit()).toBe(0)
+  })
+})
+
+describe('تصحيح الـ 50,000 على جهاز طُبّق عليه التفصيل سابقاً', () => {
+  it('يحذف السطر ويبقى القيد متوازناً، ويضيف حساب أحمد مرة واحدة', async () => {
+    const a = await device()
+    const L = (accountId: string, r: number) => ({ accountId, debit: r * 100, credit: 0 })
+    const lines = [L('livestock', 50000), L('rent', 10000), L('well', 18050), L('equipment', 1430), L('vet', 875)]
+    await a.store.addEntry({ date: '2026-09-07', description: 'باقي تجهيز المشروع (إيجار، بئر، باقي قيمة الحلال)', type: 'compound', lines: [...lines, { accountId: 'cash', debit: 0, credit: 8035500 }] }, 'import')
+    const ids = a.store.pendingCorrections().map((c) => c.id)
+    expect(ids).toEqual(['extra50k', 'ahmed'])
+    await a.store.applyCorrections(ids)
+    const st = a.store.getState()
+    const e = st.entries.find((x) => x.date === '2026-09-07')!
+    expect(e.lines.reduce((s, l) => s + l.debit, 0)).toBe(3035500)
+    expect(e.lines.reduce((s, l) => s + l.credit, 0)).toBe(3035500)
+    expect(st.entries.filter((x) => x.description.includes('أحمد'))).toHaveLength(1)
+    expect(a.store.pendingCorrections()).toHaveLength(0)
   })
 })
