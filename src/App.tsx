@@ -2,20 +2,22 @@ import { useEffect, useState } from 'react'
 import { useApp } from './lib/store'
 import AddEntry from './pages/AddEntry'
 import Dashboard from './pages/Dashboard'
+import Expenses from './pages/Expenses'
 import ImportPage from './pages/Import'
 import Journal from './pages/Journal'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
-import { IconBook, IconChart, IconCloudOff, IconHome, IconPlus, IconSettings } from './ui/icons'
+import { IconBook, IconChart, IconCloudOff, IconHome, IconPlus, IconSettings, IconWallet } from './ui/icons'
 import { ConfirmHost, go, Toasts, useRoute } from './ui/kit'
 import SyncPill from './ui/SyncPill'
 
 const NAV = [
   { path: '/', label: 'الرئيسية', Icon: IconHome },
-  { path: '/journal', label: 'دفتر اليومية', Icon: IconBook },
-  { path: '/add', label: 'إضافة قيد', Icon: IconPlus, add: true },
+  { path: '/expenses', label: 'المصروفات', Icon: IconWallet },
+  { path: '/add', label: 'تسجيل', Icon: IconPlus, add: true },
+  { path: '/journal', label: 'الدفتر', Icon: IconBook },
   { path: '/reports', label: 'التقارير', Icon: IconChart },
-  { path: '/settings', label: 'الإعدادات', Icon: IconSettings },
+  { path: '/settings', label: 'الإعدادات', Icon: IconSettings, railOnly: true },
 ]
 
 export default function App() {
@@ -41,6 +43,9 @@ export default function App() {
   switch (route.path) {
     case '/add':
       page = <AddEntry key={route.params.get('edit') ?? 'new'} editId={route.params.get('edit')} />
+      break
+    case '/expenses':
+      page = <Expenses />
       break
     case '/journal':
       page = <Journal />
@@ -71,6 +76,9 @@ export default function App() {
           </div>
         </div>
         <SyncPill />
+        <button className="btn btn-ghost btn-icon top-settings" onClick={() => go('/settings')} aria-label="الإعدادات">
+          <IconSettings />
+        </button>
       </header>
 
       <main className="main">
@@ -80,7 +88,7 @@ export default function App() {
             بدون إنترنت · القيود محفوظة على الجهاز
           </div>
         )}
-        <div className="view" key={route.path + (route.params.get('edit') ?? '')}>
+        <div className="view" key={route.path + (route.params.get('edit') ?? '') + (route.params.get('m') ?? '') + (route.params.get('tab') ?? '')}>
           {page}
         </div>
       </main>
@@ -93,10 +101,10 @@ export default function App() {
             <div className="brand-sub">النظام المحاسبي لإدارة مشروع الحلال</div>
           </div>
         </div>
-        {NAV.map(({ path, label, Icon, add }) => (
+        {NAV.map(({ path, label, Icon, add, railOnly }) => (
           <button
             key={path}
-            className={`navbtn ${add ? 'add' : ''} ${activePath === path ? 'active' : ''}`}
+            className={`navbtn ${add ? 'add' : ''} ${railOnly ? 'rail-only' : ''} ${activePath === path ? 'active' : ''}`}
             onClick={() => go(path)}
             aria-current={activePath === path ? 'page' : undefined}
           >

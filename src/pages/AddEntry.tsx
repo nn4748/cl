@@ -154,7 +154,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
       } else {
         const saved = await addEntry(d)
         if (navigator.vibrate) navigator.vibrate(25)
-        toast(`تم حفظ القيد رقم ${saved.number}`, 'ok', { label: 'عرض', run: () => go(`/journal?open=${saved.id}`) })
+        toast(`تم الحفظ · رقم ${saved.number}`, 'ok', { label: 'عرض', run: () => go(`/journal?open=${saved.id}`) })
         setAmount('')
         setDescription('')
         setFlagged(false)
@@ -194,17 +194,17 @@ export default function AddEntry({ editId }: { editId: string | null }) {
     <form onSubmit={submit} noValidate>
       <div className="page-head">
         <div>
-          <h1 className="page-title">{editing ? 'تعديل القيد' : 'إضافة قيد'}</h1>
+          <h1 className="page-title">{editing ? 'تعديل العملية' : 'تسجيل عملية'}</h1>
           <p className="page-sub">
-            قيد رقم <b className="num">{number}</b> · {fmtDateLong(date)}
+            رقم <b className="num">{number}</b> · {fmtDateLong(date)}
           </p>
         </div>
         <div className="tabs" style={{ margin: 0, flex: 'none' }}>
           <button type="button" className={mode === 'simple' ? 'on' : ''} onClick={() => switchMode('simple')}>
-            سريع
+            سهل
           </button>
           <button type="button" className={mode === 'compound' ? 'on' : ''} onClick={() => switchMode('compound')}>
-            قيد مركب
+            تفصيلي
           </button>
         </div>
       </div>
@@ -220,17 +220,17 @@ export default function AddEntry({ editId }: { editId: string | null }) {
           <>
             <div className="segmented" role="tablist" style={{ marginBottom: 14 }}>
               <button type="button" className={direction === 'out' ? 'on out' : ''} onClick={() => pickDirection('out')}>
-                صرف / شراء
-                <small>مدين</small>
+                شريت / صرفت
+                <small>فلوس طالعة</small>
               </button>
               <button type="button" className={direction === 'in' ? 'on in' : ''} onClick={() => pickDirection('in')}>
-                قبض / بيع
-                <small>دائن</small>
+                بعت / قبضت
+                <small>فلوس داخلة</small>
               </button>
             </div>
 
             <label className="field">
-              <span className="label">المبلغ بالريال السعودي</span>
+              <span className="label">كم المبلغ؟</span>
               <div className="amount-wrap">
                 <input
                   ref={amountRef}
@@ -251,7 +251,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
             </label>
 
             <div className="field">
-              <span className="label">نوع العملية</span>
+              <span className="label">{direction === 'out' ? 'وش شريت؟' : 'وش بعت؟'}</span>
               <div className="op-grid">
                 {ops.map((o) => (
                   <button type="button" key={o.id} className={`op ${op === o.id ? 'on' : ''}`} onClick={() => pickOp(o.id)}>
@@ -270,7 +270,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
         )}
 
         <label className="field">
-          <span className="label">البيان</span>
+          <span className="label">ملاحظة</span>
           <input
             className="input"
             placeholder={mode === 'simple' ? `مثال: ${direction === 'out' ? 'شعير 10 أكياس' : 'بيع 5 رؤوس غنم'}` : 'مثال: شراء أعلاف + بنزين'}
@@ -335,7 +335,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
         )}
         <button className="btn btn-primary btn-lg" type="submit" disabled={saving}>
           <IconCheck />
-          {editing ? 'حفظ التعديل' : 'حفظ القيد'}
+          {editing ? 'حفظ التعديل' : 'حفظ'}
           {mode === 'simple' && amountValue ? <span className="money" style={{ opacity: 0.8, fontWeight: 500 }}>· {formatSAR(amountValue)}</span> : null}
         </button>
         {editing && (

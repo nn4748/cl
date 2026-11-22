@@ -119,3 +119,9 @@ export const IconRestore = (p: P) => (
     <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" />
   </svg>
 )
+export const IconWallet = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-4a2 2 0 0 0 0 4h4v2a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V6" />
+    <path d="M21 13v4" />
+  </svg>
+)

@@ -5,7 +5,8 @@ import { fmtDate, fmtMonth, MONTHS_AR, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
 import { cloudEnabled, useApp } from '../lib/store'
 import type { Entry } from '../lib/types'
-import { IconBook, IconFile, IconPlus } from '../ui/icons'
+import { expenseItems, monthSums, workerMonths } from '../lib/expenses'
+import { IconBook, IconFile, IconPlus, IconWallet } from '../ui/icons'
 import { OpIcon } from '../ui/opIcons'
 import { go, Money } from '../ui/kit'
 
@@ -34,6 +35,10 @@ export default function Dashboard() {
     [entries],
   )
 
+  const expItems = expenseItems(entries, accounts)
+  const lastExpMonth = monthSums(expItems)[0]
+  const lastWorker = workerMonths(expItems, accounts)[0]
+
   if (t.count === 0) {
     return (
       <div>
@@ -49,7 +54,7 @@ export default function Dashboard() {
           <p>اكتب المبلغ، اختر نوع العملية، واضغط «حفظ القيد».</p>
           <div className="grid" style={{ maxWidth: 360, margin: '18px auto 0' }}>
             <button className="btn btn-primary btn-lg" onClick={() => go('/add')}>
-              <IconPlus /> إضافة قيد جديد
+              <IconPlus /> تسجيل عملية
             </button>
             <button className="btn btn-outline" onClick={() => go('/import')}>
               <IconFile /> استيراد دفتر اليومية الأصلي
@@ -61,6 +66,7 @@ export default function Dashboard() {
   }
 
   const maxAcc = Math.max(1, ...accSums.map((a) => a.balance))
+
 
   return (
     <div className="grid grid-main">
@@ -85,6 +91,29 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        <div className="quick-tiles">
+          <button className="quick-tile" onClick={() => go(`/expenses?m=${lastExpMonth?.key ?? thisMonthKey}`)}>
+            <span className="qt-ico">
+              <IconWallet />
+            </span>
+            <span className="qt-title">مصروفات الشهر</span>
+            <span className="qt-sub">{fmtMonth(lastExpMonth?.key ?? thisMonthKey)}</span>
+            <span className="qt-val">
+              <Money v={lastExpMonth?.total ?? 0} />
+            </span>
+          </button>
+          <button className="quick-tile" onClick={() => go(lastWorker ? `/expenses?tab=worker&m=${lastWorker.key}` : '/expenses?tab=worker')}>
+            <span className="qt-ico">
+              <OpIcon type="wages" />
+            </span>
+            <span className="qt-title">مصروفات العامل</span>
+            <span className="qt-sub">{lastWorker ? fmtMonth(lastWorker.key) : 'لا يوجد بعد'}</span>
+            <span className="qt-val">
+              <Money v={lastWorker?.total ?? 0} />
+            </span>
+          </button>
+        </div>
 
         <div className="grid grid-2">
           <div className="stat">
@@ -161,7 +190,7 @@ export default function Dashboard() {
 
       <div className="stack">
         <button className="btn btn-primary btn-lg only-mobile-btn" onClick={() => go('/add')}>
-          <IconPlus /> إضافة قيد جديد
+          <IconPlus /> تسجيل عملية
         </button>
 
         <section className="card">
