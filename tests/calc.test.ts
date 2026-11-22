@@ -33,13 +33,13 @@ describe('المبالغ', () => {
 
 describe('دفتر مشروع الحلال الأصلي', () => {
   const cash = cashSet(DEFAULT_ACCOUNTS)
-  it('كل القيود متوازنة والمجموع 297,938', () => {
+  it('كل القيود متوازنة والمجموع 297,938 (مع تفصيل أغسطس)', () => {
     const entries = toEntries()
     const t = totals(entries, cash)
     expect(t.debit).toBe(ORIGINAL_TOTAL_HALALA)
     expect(t.credit).toBe(0)
     expect(t.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(t.count).toBe(14)
+    expect(t.count).toBe(18)
     expect(t.ledgerBalanced).toBe(true)
     expect(t.cashBalance).toBe(-ORIGINAL_TOTAL_HALALA)
   })
@@ -62,6 +62,7 @@ describe('دفتر مشروع الحلال الأصلي', () => {
   it('الرصيد التراكمي ينتهي بالمجموع', () => {
     const rows = journalRows(toEntries(), cash)
     expect(rows.at(-1)!.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(rows[0].balance).toBe(27606600)
+    expect(rows[0].balance).toBe(500000)
+    expect(rows.filter((r) => r.entry.date.startsWith('2026-08')).length).toBe(4)
   })
 })

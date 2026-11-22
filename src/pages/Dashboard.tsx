@@ -3,12 +3,12 @@ import { OPERATION_LABEL } from '../lib/accounts'
 import { byAccount, byMonth, cashSet, entryDC, totals, type PeriodSum } from '../lib/calc'
 import { fmtDate, fmtMonth, MONTHS_AR, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
-import { cloudEnabled, useApp } from '../lib/store'
+import { applyAugustSplit, cloudEnabled, findCombinedEntry1, useApp } from '../lib/store'
 import type { Entry } from '../lib/types'
 import { expenseItems, monthSums, workerMonths } from '../lib/expenses'
 import { IconBook, IconFile, IconPlus, IconWallet } from '../ui/icons'
 import { OpIcon } from '../ui/opIcons'
-import { go, Money } from '../ui/kit'
+import { confirmDialog, go, Money, toast } from '../ui/kit'
 
 export function opIcon(e: Entry) {
   return <OpIcon type={e.type} />
@@ -91,6 +91,8 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {findCombinedEntry1(entries) && <AugustCard />}
 
         <div className="quick-tiles">
           <button className="quick-tile" onClick={() => go(`/expenses?m=${lastExpMonth?.key ?? thisMonthKey}`)}>
@@ -297,4 +299,41 @@ function niceMax(v: number) {
   const n = v / p
   const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10
   return m * p
+}
+
+function AugustCard() {
+  const apply = async () => {
+    const ok = await confirmDialog({
+      title: 'تفصيل القيد 1 حسب أوراق أغسطس؟',
+      body: (
+        <>
+          القيد 1 (276,066 ريال بتاريخ 7 سبتمبر) يتقسّم على تواريخه الحقيقية من الأوراق:
+          <br />12 أغسطس عربون 5,000 · 13 أغسطس تحويل الحلال وأعلاف 140,091 · 27 أغسطس 34 رأس 46,960 · 29 أغسطس علاج وشعير وخيام 3,660 · والباقي 80,355 يبقى في 7 سبتمبر.
+          <br />
+          <b>المجموع نفسه بدون أي تكرار.</b>
+        </>
+      ),
+      confirm: 'تطبيق',
+    })
+    if (!ok) return
+    try {
+      const n = await applyAugustSplit()
+      toast(`تم · أُضيف ${n} قيود لشهر أغسطس`)
+    } catch (e) {
+      toast((e as Error).message, 'err')
+    }
+  }
+  return (
+    <section className="card" style={{ borderInlineStart: '4px solid var(--caramel)' }}>
+      <h2 className="card-title" style={{ marginBottom: 6 }}>
+        أوراق أغسطس جاهزة
+      </h2>
+      <p className="muted small" style={{ marginTop: 0 }}>
+        الأوراق المكتوبة باليد هي تفاصيل القيد 1. بتطبيقها يظهر شهر أغسطس في المصروفات بتواريخه الصحيحة.
+      </p>
+      <button className="btn btn-primary btn-sm" onClick={apply}>
+        مراجعة وتطبيق
+      </button>
+    </section>
+  )
 }

@@ -227,3 +227,28 @@ export async function updateSettings(patch: Partial<Settings>) {
   await DB.saveSettings(settings)
   setState({ settings })
 }
+
+// ───────────── تفصيل القيد 1 حسب أوراق أغسطس ─────────────
+
+/** يجد القيد 1 الأصلي (276,066 بتاريخ 7 سبتمبر) إن كان مستورداً بصيغته المجمّعة */
+export function findCombinedEntry1(entries: Entry[] = state.entries): Entry | undefined {
+  return entries.find(
+    (e) =>
+      !e.deleted &&
+      e.date === '2026-09-07' &&
+      e.lines.reduce((s, l) => s + l.debit, 0) === 276_066_00 &&
+      e.lines.some((l) => l.accountId === 'livestock' && l.debit === 198_000_00),
+  )
+}
+
+/** يقسم القيد 1 على تواريخه الحقيقية — نفس المجموع، بدون تكرار */
+export async function applyAugustSplit(): Promise<number> {
+  const e1 = findCombinedEntry1()
+  if (!e1) return 0
+  const { AUGUST_SPLIT, AUGUST_REMAINDER } = await import('./seed')
+  const total = [...AUGUST_SPLIT, AUGUST_REMAINDER].reduce((s, d) => s + d.lines.reduce((x, l) => x + l.debit, 0), 0)
+  if (total !== 276_066_00) throw new Error('مجموع التفصيل لا يطابق القيد 1')
+  await updateEntry(e1.id, { ...AUGUST_REMAINDER, number: undefined })
+  for (const d of AUGUST_SPLIT) await addEntry({ ...d, number: undefined }, 'import')
+  return AUGUST_SPLIT.length
+}

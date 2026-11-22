@@ -110,7 +110,7 @@ export default function ImportPage() {
 
   const loadBuiltin = () => {
     setItems(fromDrafts(ORIGINAL_JOURNAL, entries))
-    setSource({ name: 'دفتر اليومية، مشروع الحلال (7 سبتمبر – 14 نوفمبر 2026)', statedTotal: ORIGINAL_TOTAL_HALALA, notes: ORIGINAL_NOTES, pages: [] })
+    setSource({ name: 'دفتر اليومية، مشروع الحلال (12 أغسطس – 14 نوفمبر 2026)', statedTotal: ORIGINAL_TOTAL_HALALA, notes: ORIGINAL_NOTES, pages: [] })
   }
 
   const loadPdf = async (f: File) => {
@@ -195,7 +195,7 @@ export default function ImportPage() {
             </div>
             <div style={{ fontWeight: 700, color: 'var(--walnut)', fontSize: 17 }}>دفتر مشروع الحلال الأصلي</div>
             <p className="muted small" style={{ marginBottom: 0 }}>
-              14 قيداً من 7 سبتمبر إلى 14 نوفمبر 2026 بإجمالي {formatSAR(ORIGINAL_TOTAL_HALALA)} ريال، منقولة ومُطابقة مع الملف، مع ملاحظات البنود التي تحتاج تأكيد.
+              {ORIGINAL_JOURNAL.length} قيداً من 12 أغسطس إلى 14 نوفمبر 2026 بإجمالي {formatSAR(ORIGINAL_TOTAL_HALALA)} ريال، منقولة ومُطابقة مع الملف، مع ملاحظات البنود التي تحتاج تأكيد.
             </p>
           </button>
         </div>

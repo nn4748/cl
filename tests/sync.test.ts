@@ -182,3 +182,21 @@ describe('التخزين المحلي', () => {
     expect(r2.renumbered).toBe(1)
   })
 })
+
+describe('تفصيل أوراق أغسطس', () => {
+  it('يقسم القيد 1 المجمّع بدون تغيير المجموع أو أرصدة الحسابات', async () => {
+    const a = await device()
+    const L = (accountId: string, r: number) => ({ accountId, debit: r * 100, credit: 0 })
+    const lines = [L('livestock', 198000), L('transport', 1800), L('rent', 10000), L('well', 18050), L('equipment', 3510), L('feed', 41706), L('vet', 3000)]
+    await a.store.addEntry({ date: '2026-09-07', description: 'شراء الحلال وتجهيز المشروع', type: 'compound', lines: [...lines, { accountId: 'cash', debit: 0, credit: 27606600 }] }, 'import')
+    const { byAccount, totals, cashSet } = await import('../src/lib/calc')
+    const before = byAccount(a.store.getState().entries, a.store.getState().accounts).map((x) => [x.account.id, x.balance])
+    expect(await a.store.applyAugustSplit()).toBe(4)
+    const st = a.store.getState()
+    expect(st.entries.filter((e) => !e.deleted)).toHaveLength(5)
+    expect(totals(st.entries, cashSet(st.accounts)).debit).toBe(27606600)
+    expect(byAccount(st.entries, st.accounts).map((x) => [x.account.id, x.balance]).sort()).toEqual(before.sort())
+    expect(a.store.findCombinedEntry1()).toBeUndefined()
+    expect(await a.store.applyAugustSplit()).toBe(0)
+  })
+})
