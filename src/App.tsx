@@ -1,122 +1,118 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { useApp } from './lib/store'
+import AddEntry from './pages/AddEntry'
+import Dashboard from './pages/Dashboard'
+import ImportPage from './pages/Import'
+import Journal from './pages/Journal'
+import Reports from './pages/Reports'
+import Settings from './pages/Settings'
+import { IconBook, IconChart, IconCloudOff, IconHome, IconPlus, IconSettings } from './ui/icons'
+import { ConfirmHost, go, Toasts, useRoute } from './ui/kit'
+import SyncPill from './ui/SyncPill'
 
-function App() {
-  const [count, setCount] = useState(0)
+const NAV = [
+  { path: '/', label: 'الرئيسية', Icon: IconHome },
+  { path: '/journal', label: 'دفتر اليومية', Icon: IconBook },
+  { path: '/add', label: 'إضافة قيد', Icon: IconPlus, add: true },
+  { path: '/reports', label: 'التقارير', Icon: IconChart },
+  { path: '/settings', label: 'الإعدادات', Icon: IconSettings },
+]
+
+export default function App() {
+  const app = useApp()
+  const route = useRoute()
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 4)
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
+
+  if (!app.ready) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}>
+        <img src="/icons/icon-192.png" width={72} height={72} style={{ borderRadius: 20 }} alt="" />
+      </div>
+    )
+  }
+
+  let page
+  switch (route.path) {
+    case '/add':
+      page = <AddEntry key={route.params.get('edit') ?? 'new'} editId={route.params.get('edit')} />
+      break
+    case '/journal':
+      page = <Journal />
+      break
+    case '/reports':
+      page = <Reports />
+      break
+    case '/settings':
+      page = <Settings />
+      break
+    case '/import':
+      page = <ImportPage />
+      break
+    default:
+      page = <Dashboard />
+  }
+
+  const activePath = route.path === '/import' ? '/settings' : route.path
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className={`topbar no-print ${scrolled ? 'scrolled' : ''}`}>
+        <div className="brand">
+          <img src="/icons/icon-192.png" alt="" />
+          <div className="brand-text">
+            <div className="brand-title">دفتر الحلال</div>
+            <div className="brand-sub">{app.settings.businessName || 'النظام المحاسبي لإدارة مشروع الحلال'}</div>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        <SyncPill />
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <main className="main">
+        {!app.online && (
+          <div className="offline-banner">
+            <IconCloudOff width={18} height={18} />
+            أنت بدون إنترنت — القيود تُحفظ على الجهاز وتُرسل تلقائياً عند عودة الاتصال
+          </div>
+        )}
+        <div className="view" key={route.path + (route.params.get('edit') ?? '')}>
+          {page}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <nav className="bottomnav no-print" aria-label="التنقل الرئيسي">
+        <div className="rail-brand">
+          <img src="/icons/icon-192.png" alt="" />
+          <div>
+            <div className="brand-title">دفتر الحلال</div>
+            <div className="brand-sub">النظام المحاسبي لإدارة مشروع الحلال</div>
+          </div>
+        </div>
+        {NAV.map(({ path, label, Icon, add }) => (
+          <button
+            key={path}
+            className={`navbtn ${add ? 'add' : ''} ${activePath === path ? 'active' : ''}`}
+            onClick={() => go(path)}
+            aria-current={activePath === path ? 'page' : undefined}
+          >
+            {add ? (
+              <span className="plus">
+                <Icon />
+              </span>
+            ) : (
+              <Icon />
+            )}
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+      <Toasts />
+      <ConfirmHost />
+    </div>
   )
 }
-
-export default App

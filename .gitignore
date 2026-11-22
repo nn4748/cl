@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# بيانات خاصة لا تُرفع
+tests/fixtures/*.pdf
+.env
+.env.local

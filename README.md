@@ -1,32 +1,72 @@
-# React + TypeScript + Vite
+# دفتر الحلال
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**النظام المحاسبي لإدارة مشروع الحلال.** هو دفتر يومية رقمي بالعربية، ويُثبَّت على الجوال كتطبيق (PWA). مصمم ليحل محل دفتر اليومية الورقي لمشروع المواشي.
 
-Currently, two official plugins are available:
+> الهدف الأساسي: تفتح التطبيق، تكتب المبلغ، تختار نوع العملية، وتضغط **«حفظ القيد»**. كل هذا في أقل من 10 ثوانٍ، ويشتغل حتى بدون إنترنت.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## المزايا
 
-## React Compiler
+| | |
+|---|---|
+| **الرئيسية** | إجمالي المدين والدائن، والرصيد النهائي، وعدد القيود، ورصيد الصندوق، وملخص ورسم بياني شهري، وتوزيع المصروفات على الحسابات، وآخر العمليات |
+| **إضافة قيد** | وضع سريع: مبلغ كبير، ثم صرف أو قبض، ثم نوع العملية. فيه أيضاً وضع **قيد مركب** (من ح/ … إلى ح/ …) مع فحص التوازن. رقم القيد يُولَّد تلقائياً ومتسلسلاً |
+| **دفتر اليومية** | عرض مختصر أو تفصيلي على طريقة الدفتر الورقي، مع بحث وتصفية بالتاريخ ونوع العملية، وترتيب من الأحدث أو الأقدم. تقدر تعدّل القيد أو تلغيه بعد تأكيد، وتسترجعه، وتشوف سجل تعديلاته |
+| **التقارير** | يومي وشهري وسنوي وتفصيلي، مع ملخص الحسابات (الترحيل). التصدير إلى **PDF** (طباعة بخط عربي سليم) وإلى **Excel** (ثلاث أوراق) |
+| **الاستيراد من PDF** | يقرأ ملف الدفتر على الجهاز نفسه، ويستخرج رقم القيد والتاريخ والبيان والمدين والدائن، ويقارن المجموع بالمكتوب في الملف. **لا يُستورد أي شيء قبل مراجعتك واعتمادك** |
+| **النسخ الاحتياطي** | ملف JSON تقدر تشاركه من الجوال أو تنزّله. الاسترجاع يدمج القيود بأمان: لا يكرر قيداً ولا يكتب فوق قيد موجود |
+| **المزامنة (اختيارية)** | عبر Supabase مع تسجيل دخول، ومؤشر واضح لحالة المزامنة، ومعالجة تعارض التعديلات بين الأجهزة |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## العمل بدون إنترنت وسلامة البيانات
 
-## Expanding the Oxlint configuration
+- **IndexedDB**: كل قيد يُحفظ أولاً على الجهاز، في نفس العملية مع سجل التدقيق الخاص به.
+- **Service Worker (Workbox)**: هيكل التطبيق والخطوط والمكتبات كلها مخزنة مسبقاً، فالتطبيق يفتح بدون إنترنت. فيه أيضاً صفحة `offline.html` احتياطية.
+- **منع التكرار**: كل قيد له معرّف UUID يُولَّد على الجهاز. إذا أُعيد إرسال قيد بعد ضياع رد الخادم، ما يُسجَّل مرتين.
+- **الترقيم التسلسلي**: الرقم فريد في الخادم، ولا يُعاد استخدام رقم قيد ملغي. إذا استخدم جهازان نفس الرقم وهما بدون إنترنت، القيد الأحدث يأخذ الرقم التالي ويُعلَّم للمراجعة.
+- **لا كتابة فوق السجلات**: التعديل يُرسل بشرط أن نسخة الخادم ما تغيّرت. إذا تغيّرت، يُعلَّم القيد كـ«تعارض» وتختار أنت النسخة اللي تعتمدها.
+- **حذف ناعم فقط**: القيد الملغي يبقى في السجل. والخادم يرفض الحذف النهائي ويرفض القيد غير المتوازن.
+- **المبالغ بالهللة**: تُخزَّن كأعداد صحيحة، فما يصير خطأ في الكسور العشرية.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## التشغيل
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev        # للتطوير
+npm run build      # بناء نسخة الإنتاج في dist/
+npm run preview    # تجربة نسخة الإنتاج (مع Service Worker)
+npm test           # اختبارات الحسابات والمزامنة واستخراج PDF
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## النشر (HTTPS مطلوب لتثبيت التطبيق)
+
+أي استضافة ملفات ثابتة بـ HTTPS تكفي:
+
+- **Vercel**: استورد المستودع. أمر البناء `npm run build` ومجلد الإخراج `dist`. ملف `vercel.json` جاهز ويضبط ترويسات الكاش.
+- **Netlify**: نفس الإعدادات، وملف `public/_headers` جاهز.
+- **Cloudflare Pages**: نفس الإعدادات.
+
+بعد النشر افتح الرابط من الجوال:
+- **آيفون (Safari)**: زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية».
+- **أندرويد (Chrome)**: القائمة ⋮، ثم «تثبيت التطبيق»، أو استخدم زر التثبيت في الإعدادات.
+
+## ربط Supabase (اختياري، للمزامنة بين أكثر من جهاز)
+
+1. أنشئ مشروعاً على [supabase.com](https://supabase.com).
+2. من **SQL Editor** شغّل محتوى الملف [`supabase/schema.sql`](supabase/schema.sql).
+3. في التطبيق افتح **الإعدادات ← ربط Supabase**، وأدخل رابط المشروع والمفتاح العام (anon). بدلاً من ذلك تقدر تضعهما في `.env` كما في `.env.example`.
+4. أنشئ حساباً لكل فرد من العائلة، ثم **عطّل التسجيل العام** من Authentication ← Providers ← Email.
+
+بدون Supabase يشتغل التطبيق كاملاً على الجهاز. احرص على أخذ نسخة احتياطية بشكل دوري.
+
+## البنية
+
+```
+src/
+  lib/         منطق الحسابات (calc)، المبالغ (money)، التخزين (db, store)، المزامنة (sync)،
+               الاستيراد (pdfParse, pdfImport, seed)، التصدير (excel, backup)
+  pages/       الرئيسية، إضافة قيد، دفتر اليومية، التقارير، الإعدادات، الاستيراد
+  ui/          المكونات المشتركة
+  service-worker.ts
+supabase/schema.sql
+scripts/generate-assets.cjs   توليد الأيقونات وشاشات البداية من design/icon.svg
+tests/                        اختبارات Vitest
+```
