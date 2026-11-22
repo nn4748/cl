@@ -80,7 +80,7 @@ function InstallCard() {
               اختر <b>«إضافة إلى الشاشة الرئيسية»</b>
             </li>
             <li>
-              اضغط <b>«إضافة»</b> — سيظهر تطبيق «دفتر الحلال» بين تطبيقاتك
+              اضغط <b>«إضافة»</b>، سيظهر تطبيق «دفتر الحلال» بين تطبيقاتك
             </li>
           </ol>
         ) : (
@@ -267,7 +267,7 @@ function ConflictRow({ entry }: { entry: Entry }) {
   const total = (e?: Entry) => formatSAR(e?.lines.reduce((s, l) => s + l.debit, 0) ?? 0)
   return (
     <div className="card" style={{ padding: 12, background: 'var(--cream)', boxShadow: 'none' }}>
-      <b>قيد رقم {entry.number}</b> — عُدّل على جهاز آخر أثناء تعديلك له
+      <b>قيد رقم {entry.number}</b>، عُدّل على جهاز آخر أثناء تعديلك له
       <div className="grid grid-2 small" style={{ margin: '8px 0' }}>
         <div>
           <div className="muted">نسختك</div>
@@ -323,7 +323,7 @@ function BackupCard() {
         <dt>عدد القيود</dt>
         <dd className="num">{entries.length}</dd>
         <dt>حماية التخزين</dt>
-        <dd>{persisted ? 'مفعّلة — المتصفح لن يحذف البيانات' : 'غير مضمونة — احتفظ بنسخة احتياطية'}</dd>
+        <dd>{persisted ? 'مفعّلة، المتصفح لن يحذف البيانات' : 'غير مضمونة، احتفظ بنسخة احتياطية'}</dd>
       </dl>
       {stale && entries.length > 0 && (
         <div className="notice" style={{ marginBottom: 12 }}>
@@ -358,7 +358,7 @@ function ImportCard() {
     <section className="card">
       <h2 className="card-title">استيراد دفتر اليومية</h2>
       <p className="muted" style={{ marginTop: 0 }}>
-        استيراد القيود من ملف PDF للدفتر الأصلي — تُعرض كل القيود للمراجعة والاعتماد قبل إدخالها.
+        استيراد القيود من ملف PDF للدفتر الأصلي، تُعرض كل القيود للمراجعة والاعتماد قبل إدخالها.
       </p>
       <button className="btn btn-outline" onClick={() => go('/import')}>
         <IconFile /> استيراد من PDF
@@ -469,7 +469,7 @@ function BusinessCard() {
       </button>
       <p className="muted small" style={{ marginBottom: 0 }}>
         دفتر الحلال · الإصدار {__APP_VERSION__}
-        {pwa.offlineReady && ' · جاهز للعمل بدون إنترنت ✓'}
+        {pwa.offlineReady && ' · يعمل بدون إنترنت'}
       </p>
     </section>
   )

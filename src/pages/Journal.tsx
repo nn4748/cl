@@ -99,7 +99,7 @@ export default function Journal() {
                 setTo('')
               }}
             >
-              مسح التصفية ✕
+              مسح التصفية
             </button>
           )}
         </div>
@@ -133,7 +133,7 @@ export default function Journal() {
 
       {rows.length === 0 ? (
         <div className="card empty">
-          <div className="big">🔍</div>
+          <div className="empty-ico"><IconSearch /></div>
           <h3>لا توجد قيود</h3>
           <p>{entries.length ? 'لا توجد نتائج مطابقة للبحث أو التصفية' : 'ابدأ بإضافة أول قيد'}</p>
           {!entries.length && (
@@ -190,8 +190,8 @@ function EntryCard({ r, onOpen }: { r: JournalRow; onOpen: () => void }) {
       <span className="meta">
         <span>
           {fmtDate(e.date)} · {OPERATION_LABEL[e.type]}
-          {e.flagged && ' · ⚠︎'}
-          {e.sync !== 'synced' && cloudEnabled() && ' · ⏳'}
+          {e.flagged && <span className="flag-dot" title="يحتاج مراجعة" />}
+          {e.sync !== 'synced' && cloudEnabled() && ' · لم يُرسل'}
         </span>
         {!e.deleted && (
           <span>
@@ -242,7 +242,7 @@ export function JournalTable({
               <tr key={e.id} className={e.deleted ? 'deleted' : ''} onClick={() => onOpen?.(e.id)}>
                 <td>
                   <span className="entry-num">{e.number}</span>
-                  {e.flagged && <span title={e.flagNote}> ⚠︎</span>}
+                  {e.flagged && <span className="flag-dot" title={e.flagNote} />}
                 </td>
                 <td className="num">
                   {fmtDate(e.date)}
@@ -275,7 +275,7 @@ export function JournalTable({
                   <>
                     <td rowSpan={all.length + 1}>
                       <span className="entry-num">{e.number}</span>
-                      {e.flagged && <span title={e.flagNote}> ⚠︎</span>}
+                      {e.flagged && <span className="flag-dot" title={e.flagNote} />}
                     </td>
                     <td rowSpan={all.length + 1} className="num">
                       {fmtDate(e.date)}
@@ -347,7 +347,7 @@ function EntrySheet({
   }
 
   return (
-    <Sheet open onClose={onClose} title={`قيد رقم ${e.number}${e.deleted ? ' — ملغي' : ''}`}>
+    <Sheet open onClose={onClose} title={`قيد رقم ${e.number}${e.deleted ? '، ملغي' : ''}`}>
       <p className="muted" style={{ marginTop: 0 }}>
         {dayName(e.date)} {fmtDate(e.date)} · {OPERATION_LABEL[e.type]}
       </p>
@@ -388,9 +388,9 @@ function EntrySheet({
           {e.sync === 'synced' ? (
             <span className="badge ok">متزامن</span>
           ) : e.sync === 'conflict' ? (
-            <span className="badge err">تعارض — راجع الإعدادات</span>
+            <span className="badge err">تعارض، راجع الإعدادات</span>
           ) : cloudEnabled() ? (
-            <span className="badge pending">محفوظ على الجهاز — بانتظار الإرسال</span>
+            <span className="badge pending">محفوظ على الجهاز، بانتظار الإرسال</span>
           ) : (
             <span className="badge">محفوظ على هذا الجهاز</span>
           )}

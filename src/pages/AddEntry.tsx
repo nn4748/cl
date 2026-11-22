@@ -5,6 +5,7 @@ import { formatSAR, parseAmount, toInputValue } from '../lib/money'
 import { addEntry, nextNumber, updateEntry, upsertAccount, useApp, validateDraft, type EntryDraft } from '../lib/store'
 import type { AccountKind, OperationType } from '../lib/types'
 import { IconCheck } from '../ui/icons'
+import { OpIcon } from '../ui/opIcons'
 import { go, Sheet, toast } from '../ui/kit'
 import LinesEditor, { AccountSelect, linesToRows, rowsToLines, type LineRow } from '../ui/LinesEditor'
 
@@ -97,7 +98,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
     }
     if (m === 'simple' && mode === 'compound' && rows.length !== 2) {
       // لا نفقد بيانات القيد المركب
-      if (rows.some((r) => r.amount)) return toast('القيد المركب فيه أكثر من سطرين — احذف الأسطر الزائدة أولاً', 'err')
+      if (rows.some((r) => r.amount)) return toast('القيد المركب فيه أكثر من سطرين، احذف الأسطر الزائدة أولاً', 'err')
     }
     setMode(m)
   }
@@ -137,7 +138,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
     e?.preventDefault()
     if (saving) return
     const d = draft()
-    const errs = mode === 'simple' && !amount.trim() ? ['أدخل المبلغ'] : amountInvalid ? ['المبلغ غير صحيح — استخدم أرقاماً فقط (مثال: 1250.50)'] : validateDraft(d)
+    const errs = mode === 'simple' && !amount.trim() ? ['أدخل المبلغ'] : amountInvalid ? ['المبلغ غير صحيح، استخدم أرقاماً فقط (مثال: 1250.50)'] : validateDraft(d)
     if (mode === 'simple' && debitAcc === creditAcc) errs.push('الحساب المدين والدائن لا يكونان نفس الحساب')
     if (errs.length) {
       setErrors(errs)
@@ -210,7 +211,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
 
       {editing?.sync === 'conflict' && (
         <div className="notice" style={{ marginBottom: 12 }}>
-          هذا القيد عُدّل من جهاز آخر — راجع التعارض من الإعدادات قبل تعديله.
+          هذا القيد عُدّل من جهاز آخر، راجع التعارض من الإعدادات قبل تعديله.
         </div>
       )}
 
@@ -254,9 +255,7 @@ export default function AddEntry({ editId }: { editId: string | null }) {
               <div className="op-grid">
                 {ops.map((o) => (
                   <button type="button" key={o.id} className={`op ${op === o.id ? 'on' : ''}`} onClick={() => pickOp(o.id)}>
-                    <span className="ico" aria-hidden>
-                      {o.icon}
-                    </span>
+                    <OpIcon type={o.id} className="ico" />
                     {o.label}
                   </button>
                 ))}

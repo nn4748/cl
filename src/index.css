@@ -1642,3 +1642,51 @@ details.more[open] > summary::before {
   }
 }
 .only-mobile-btn{} @media (min-width:900px){.only-mobile-btn{display:none !important}}
+
+.empty-ico {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 20px;
+  background: var(--cream);
+  color: var(--caramel);
+  display: grid;
+  place-items: center;
+}
+
+.empty-ico svg {
+  width: 30px;
+  height: 30px;
+}
+
+.op .ico {
+  width: 24px;
+  height: 24px;
+  color: var(--caramel);
+}
+
+.op.on .ico {
+  color: var(--coffee);
+}
+
+.list-ico {
+  color: var(--coffee);
+}
+
+.entry-card .desc svg {
+  width: 17px;
+  height: 17px;
+  vertical-align: -3px;
+  color: var(--caramel);
+  margin-inline-end: 4px;
+}
+
+.flag-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  margin-inline: 6px;
+  vertical-align: middle;
+}

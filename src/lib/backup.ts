@@ -40,7 +40,7 @@ export async function downloadBackup() {
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean }
   if (nav.canShare?.({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
     try {
-      await navigator.share({ files: [file], title: 'نسخة احتياطية — دفتر الحلال' })
+      await navigator.share({ files: [file], title: 'نسخة احتياطية، دفتر الحلال' })
       await updateSettings({ lastBackupAt: new Date().toISOString() })
       return
     } catch (e) {

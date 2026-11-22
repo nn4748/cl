@@ -51,8 +51,8 @@ function fromPdf(x: PdfExtraction, accounts: Account[], existing: Entry[]): Revi
     const warnings = [...p.warnings]
     const rows: LineRow[] = p.lines.map((l) => {
       const acc = l.accountName ? matchAccount(l.accountName, accounts) : undefined
-      if (l.accountName && !acc) warnings.push(`الحساب «${l.accountName}» غير موجود — اختر حساباً`)
-      if (!l.accountName) warnings.push('لم يُحدد اسم الحساب — اختر حساباً')
+      if (l.accountName && !acc) warnings.push(`الحساب «${l.accountName}» غير موجود، اختر حساباً`)
+      if (!l.accountName) warnings.push('لم يُحدد اسم الحساب، اختر حساباً')
       return {
         key: crypto.randomUUID(),
         accountId: acc?.id ?? '',
@@ -66,7 +66,7 @@ function fromPdf(x: PdfExtraction, accounts: Account[], existing: Entry[]): Revi
     if (rows.length && (t.d === 0 || t.c === 0)) {
       const amt = Math.max(t.d, t.c)
       rows.push({ key: crypto.randomUUID(), accountId: CASH_ID, side: t.d ? 'credit' : 'debit', amount: String(amt / 100), note: '' })
-      warnings.push('أُضيف «الصندوق» كطرف مقابل — تأكد منه')
+      warnings.push('أُضيف «الصندوق» كطرف مقابل، تأكد منه')
     }
     const dup = p.date ? findDuplicate(existing, p.date, Math.max(t.d, t.c)) : undefined
     if (dup) warnings.push(`يبدو مكرراً مع القيد رقم ${dup} الموجود`)
@@ -79,7 +79,7 @@ function fromPdf(x: PdfExtraction, accounts: Account[], existing: Entry[]): Revi
       rows,
       warnings,
       flagged: p.marked,
-      flagNote: p.marked ? 'عليه علامة * في الدفتر الأصلي — يحتاج تأكيد' : '',
+      flagNote: p.marked ? 'عليه علامة * في الدفتر الأصلي، يحتاج تأكيد' : '',
       duplicate: dup,
     }
   })
@@ -110,7 +110,7 @@ export default function ImportPage() {
 
   const loadBuiltin = () => {
     setItems(fromDrafts(ORIGINAL_JOURNAL, entries))
-    setSource({ name: 'دفتر اليومية — مشروع الحلال (7 سبتمبر – 14 نوفمبر 2026)', statedTotal: ORIGINAL_TOTAL_HALALA, notes: ORIGINAL_NOTES, pages: [] })
+    setSource({ name: 'دفتر اليومية، مشروع الحلال (7 سبتمبر – 14 نوفمبر 2026)', statedTotal: ORIGINAL_TOTAL_HALALA, notes: ORIGINAL_NOTES, pages: [] })
   }
 
   const loadPdf = async (f: File) => {
@@ -119,7 +119,7 @@ export default function ImportPage() {
       const { extractFromPdf } = await import('../lib/pdfImport')
       const x = await extractFromPdf(f)
       if (!x.textFound) {
-        toast('الملف صورة ممسوحة بدون نص — لا يمكن قراءته تلقائياً بدقة. أدخل القيود يدوياً.', 'err')
+        toast('الملف صورة ممسوحة بدون نص، لا يمكن قراءته تلقائياً بدقة. أدخل القيود يدوياً.', 'err')
         setSource({ name: f.name, statedTotal: null, notes: ['الملف مصوّر (بخط اليد أو سكانر). القراءة الآلية للخط اليدوي غير دقيقة، لذلك لا نستورد منه تلقائياً حفاظاً على صحة الأرقام. استخدم الصور أدناه كمرجع وأضف القيود من «إضافة قيد».'], pages: x.pageImages })
         setItems([])
         setShowPages(true)
@@ -195,7 +195,7 @@ export default function ImportPage() {
             </div>
             <div style={{ fontWeight: 700, color: 'var(--walnut)', fontSize: 17 }}>دفتر مشروع الحلال الأصلي</div>
             <p className="muted small" style={{ marginBottom: 0 }}>
-              14 قيداً من 7 سبتمبر إلى 14 نوفمبر 2026 بإجمالي {formatSAR(ORIGINAL_TOTAL_HALALA)} ريال — منقولة ومُطابقة مع الملف، مع ملاحظات البنود التي تحتاج تأكيد.
+              14 قيداً من 7 سبتمبر إلى 14 نوفمبر 2026 بإجمالي {formatSAR(ORIGINAL_TOTAL_HALALA)} ريال، منقولة ومُطابقة مع الملف، مع ملاحظات البنود التي تحتاج تأكيد.
             </p>
           </button>
         </div>
@@ -249,7 +249,7 @@ export default function ImportPage() {
         </div>
         {source?.statedTotal != null && (
           <div className={`balance-bar ${statedMatches ? 'ok' : 'bad'}`} style={{ marginTop: 12 }}>
-            {statedMatches ? 'المجموع المستخرج مطابق لمجموع الدفتر ✓' : `المجموع لا يطابق الملف — الفرق ${formatSAR(Math.abs(totalAll - source.statedTotal))}. راجع القيود قبل الاعتماد.`}
+            {statedMatches ? 'المجموع المستخرج مطابق لمجموع الدفتر' : `المجموع لا يطابق الملف، الفرق ${formatSAR(Math.abs(totalAll - source.statedTotal))}. راجع القيود قبل الاعتماد.`}
           </div>
         )}
         {source && source.notes.length > 0 && (

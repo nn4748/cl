@@ -36,23 +36,22 @@ export interface OperationDef {
   direction: 'out' | 'in'
   debit: string
   credit: string
-  icon: string
 }
 
 export const OPERATIONS: OperationDef[] = [
-  { id: 'buy_livestock', label: 'شراء حلال', direction: 'out', debit: 'livestock', credit: CASH_ID, icon: '🐑' },
-  { id: 'feed', label: 'أعلاف', direction: 'out', debit: 'feed', credit: CASH_ID, icon: '🌾' },
-  { id: 'fuel', label: 'بنزين', direction: 'out', debit: 'transport', credit: CASH_ID, icon: '⛽' },
-  { id: 'transport', label: 'نقل', direction: 'out', debit: 'transport', credit: CASH_ID, icon: '🚚' },
-  { id: 'wages', label: 'رواتب وعمالة', direction: 'out', debit: 'wages', credit: CASH_ID, icon: '👷' },
-  { id: 'vet', label: 'علاج بيطري', direction: 'out', debit: 'vet', credit: CASH_ID, icon: '💊' },
-  { id: 'maintenance', label: 'صيانة', direction: 'out', debit: 'maintenance', credit: CASH_ID, icon: '🔧' },
-  { id: 'equipment', label: 'خيام ومعدات', direction: 'out', debit: 'equipment', credit: CASH_ID, icon: '⛺' },
-  { id: 'rent', label: 'إيجار', direction: 'out', debit: 'rent', credit: CASH_ID, icon: '🏠' },
-  { id: 'other_expense', label: 'مصاريف أخرى', direction: 'out', debit: 'misc', credit: CASH_ID, icon: '🧾' },
-  { id: 'sell_livestock', label: 'بيع حلال', direction: 'in', debit: CASH_ID, credit: 'sales', icon: '💰' },
-  { id: 'other_income', label: 'إيرادات أخرى', direction: 'in', debit: CASH_ID, credit: 'other_income', icon: '➕' },
-  { id: 'capital', label: 'تمويل من المالك', direction: 'in', debit: CASH_ID, credit: 'capital', icon: '🏦' },
+  { id: 'buy_livestock', label: 'شراء حلال', direction: 'out', debit: 'livestock', credit: CASH_ID },
+  { id: 'feed', label: 'أعلاف', direction: 'out', debit: 'feed', credit: CASH_ID },
+  { id: 'fuel', label: 'بنزين', direction: 'out', debit: 'transport', credit: CASH_ID },
+  { id: 'transport', label: 'نقل', direction: 'out', debit: 'transport', credit: CASH_ID },
+  { id: 'wages', label: 'رواتب وعمالة', direction: 'out', debit: 'wages', credit: CASH_ID },
+  { id: 'vet', label: 'علاج بيطري', direction: 'out', debit: 'vet', credit: CASH_ID },
+  { id: 'maintenance', label: 'صيانة', direction: 'out', debit: 'maintenance', credit: CASH_ID },
+  { id: 'equipment', label: 'خيام ومعدات', direction: 'out', debit: 'equipment', credit: CASH_ID },
+  { id: 'rent', label: 'إيجار', direction: 'out', debit: 'rent', credit: CASH_ID },
+  { id: 'other_expense', label: 'مصاريف أخرى', direction: 'out', debit: 'misc', credit: CASH_ID },
+  { id: 'sell_livestock', label: 'بيع حلال', direction: 'in', debit: CASH_ID, credit: 'sales' },
+  { id: 'other_income', label: 'إيرادات أخرى', direction: 'in', debit: CASH_ID, credit: 'other_income' },
+  { id: 'capital', label: 'تمويل من المالك', direction: 'in', debit: CASH_ID, credit: 'capital' },
 ]
 
 export const OPERATION_LABEL: Record<OperationType, string> = Object.fromEntries([

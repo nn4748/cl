@@ -1,15 +1,16 @@
 import { useMemo } from 'react'
-import { OPERATION_LABEL, OPERATIONS } from '../lib/accounts'
+import { OPERATION_LABEL } from '../lib/accounts'
 import { byAccount, byMonth, cashSet, entryDC, totals, type PeriodSum } from '../lib/calc'
 import { fmtDate, fmtMonth, MONTHS_AR, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
 import { cloudEnabled, useApp } from '../lib/store'
 import type { Entry } from '../lib/types'
-import { IconFile, IconPlus } from '../ui/icons'
+import { IconBook, IconFile, IconPlus } from '../ui/icons'
+import { OpIcon } from '../ui/opIcons'
 import { go, Money } from '../ui/kit'
 
 export function opIcon(e: Entry) {
-  return OPERATIONS.find((o) => o.id === e.type)?.icon ?? '📒'
+  return <OpIcon type={e.type} />
 }
 
 export default function Dashboard() {
@@ -38,14 +39,14 @@ export default function Dashboard() {
       <div>
         <div className="page-head">
           <div>
-            <h1 className="page-title">أهلاً بك 👋</h1>
-            <p className="page-sub">ابدأ بتسجيل أول قيد، أو استورد دفترك الحالي</p>
+            <h1 className="page-title">السلام عليكم</h1>
+            <p className="page-sub">سجّل أول قيد أو استورد دفترك الحالي</p>
           </div>
         </div>
         <div className="card empty">
-          <div className="big">📒</div>
+          <div className="empty-ico"><IconBook /></div>
           <h3>الدفتر فارغ</h3>
-          <p>سجّل أول عملية في أقل من 10 ثوانٍ: المبلغ، نوع العملية، ثم «حفظ القيد».</p>
+          <p>اكتب المبلغ، اختر نوع العملية، واضغط «حفظ القيد».</p>
           <div className="grid" style={{ maxWidth: 360, margin: '18px auto 0' }}>
             <button className="btn btn-primary btn-lg" onClick={() => go('/add')}>
               <IconPlus /> إضافة قيد جديد
@@ -71,7 +72,7 @@ export default function Dashboard() {
             <span className="cur">ر.س</span>
           </div>
           <div className="hero-label" style={{ fontSize: 12.5, opacity: 0.85 }}>
-            {t.balance >= 0 ? 'رصيد مدين — إجمالي ما صُرف على المشروع بعد خصم الوارد' : 'رصيد دائن — الوارد أكبر من المصروف'}
+            {t.balance >= 0 ? 'رصيد مدين' : 'رصيد دائن'}
           </div>
           <div className="hero-split">
             <div>
@@ -181,7 +182,7 @@ export default function Dashboard() {
                     <div className="list-title">{e.description}</div>
                     <div className="list-meta">
                       قيد {e.number} · {fmtDate(e.date)} · {OPERATION_LABEL[e.type]}
-                      {e.sync !== 'synced' && cloudEnabled() && ' · ⏳'}
+                      {e.sync !== 'synced' && cloudEnabled() && ' · لم يُرسل'}
                     </div>
                   </div>
                   <div className={`amt ${isIn ? 'credit' : 'debit'}`}>
@@ -209,7 +210,7 @@ export default function Dashboard() {
           ))}
           {!t.ledgerBalanced && (
             <div className="notice" style={{ marginTop: 8 }}>
-              تنبيه: مجموع المدين لا يساوي مجموع الدائن في الأسطر — راجع القيود.
+              مجموع المدين لا يساوي مجموع الدائن، راجع القيود.
             </div>
           )}
         </section>
@@ -247,10 +248,10 @@ function MonthlyChart({ months }: { months: PeriodSum[] }) {
         return (
           <g key={m.key}>
             <rect x={cx + 2} y={y(m.debit)} width={bw} height={Math.max(0, y(0) - y(m.debit))} rx="5" fill="#503626">
-              <title>{`${fmtMonth(m.key)} — مدين ${formatSAR(m.debit)}`}</title>
+              <title>{`${fmtMonth(m.key)} · مدين ${formatSAR(m.debit)}`}</title>
             </rect>
             <rect x={cx - bw - 2} y={y(m.credit)} width={bw} height={Math.max(0, y(0) - y(m.credit))} rx="5" fill="#3f7a4f">
-              <title>{`${fmtMonth(m.key)} — دائن ${formatSAR(m.credit)}`}</title>
+              <title>{`${fmtMonth(m.key)} · دائن ${formatSAR(m.credit)}`}</title>
             </rect>
             <text x={cx} y={H - 12} fontSize="12.5" fill="#5e4a3d" textAnchor="middle" fontWeight="600">
               {fmtMonth(m.key).split(' ')[0]}

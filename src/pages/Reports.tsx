@@ -4,7 +4,7 @@ import { exportExcel } from '../lib/excel'
 import { fmtDate, fmtDateLong, fmtMonth, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
 import { useApp } from '../lib/store'
-import { IconPrinter, IconSheet } from '../ui/icons'
+import { IconFile, IconPrinter, IconSheet } from '../ui/icons'
 import { go, Money, toast, useRoute } from '../ui/kit'
 import { JournalTable } from './Journal'
 
@@ -36,13 +36,13 @@ export default function Reports() {
   const range = useMemo(() => {
     switch (tab) {
       case 'daily':
-        return { from: day, to: day, title: `التقرير اليومي — ${fmtDateLong(day)}`, file: `daftar-alhalal-daily-${day}` }
+        return { from: day, to: day, title: `التقرير اليومي، ${fmtDateLong(day)}`, file: `daftar-alhalal-daily-${day}` }
       case 'monthly':
-        return { from: `${month}-01`, to: `${month}-31`, title: `التقرير الشهري — ${fmtMonth(month)}`, file: `daftar-alhalal-monthly-${month}` }
+        return { from: `${month}-01`, to: `${month}-31`, title: `التقرير الشهري، ${fmtMonth(month)}`, file: `daftar-alhalal-monthly-${month}` }
       case 'annual':
-        return { from: `${year}-01-01`, to: `${year}-12-31`, title: `التقرير السنوي — ${year}`, file: `daftar-alhalal-annual-${year}` }
+        return { from: `${year}-01-01`, to: `${year}-12-31`, title: `التقرير السنوي، ${year}`, file: `daftar-alhalal-annual-${year}` }
       default:
-        return { from, to, title: `تقرير القيود التفصيلي — من ${fmtDate(from)} إلى ${fmtDate(to)}`, file: `daftar-alhalal-detailed-${from}_${to}` }
+        return { from, to, title: `تقرير القيود التفصيلي، من ${fmtDate(from)} إلى ${fmtDate(to)}`, file: `daftar-alhalal-detailed-${from}_${to}` }
     }
   }, [tab, day, month, year, from, to])
 
@@ -64,7 +64,7 @@ export default function Reports() {
 
   const excel = async () => {
     try {
-      await exportExcel({ title: `${settings.businessName} — ${range.title}`, entries: inPeriod, accounts, cash, filename: `${range.file}.xlsx` })
+      await exportExcel({ title: `${settings.businessName}، ${range.title}`, entries: inPeriod, accounts, cash, filename: `${range.file}.xlsx` })
       toast('تم تصدير ملف Excel')
     } catch (e) {
       toast('تعذر التصدير: ' + (e as Error).message, 'err')
@@ -136,7 +136,7 @@ export default function Reports() {
       <div className="print-only" style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #3b261c', paddingBottom: 8 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>دفتر الحلال — {settings.businessName}</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>دفتر الحلال، {settings.businessName}</div>
             <div style={{ fontSize: 15 }}>{range.title}</div>
           </div>
           <div style={{ fontSize: 12, color: '#666' }}>تاريخ الطباعة: {fmtDate(todayISO())} · المبالغ بالريال السعودي</div>
@@ -174,7 +174,7 @@ export default function Reports() {
 
       {rows.length === 0 ? (
         <div className="card empty">
-          <div className="big">📄</div>
+          <div className="empty-ico"><IconFile /></div>
           <h3>لا توجد قيود في هذه الفترة</h3>
           <button className="btn btn-outline" onClick={() => go('/add')}>
             إضافة قيد

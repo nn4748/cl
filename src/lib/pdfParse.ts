@@ -238,7 +238,7 @@ export function parseJournal(items: TextItem[]): ParseResult {
     const c = e.lines.filter((l) => l.side === 'credit').reduce((s, l) => s + l.amount, 0)
     if (!e.date) e.warnings.push('التاريخ غير مقروء')
     if (!e.lines.length) e.warnings.push('لم يُعثر على مبالغ')
-    else if (d !== c && d > 0 && c > 0) e.warnings.push('المدين لا يساوي الدائن — راجع المبالغ')
+    else if (d !== c && d > 0 && c > 0) e.warnings.push('المدين لا يساوي الدائن، راجع المبالغ')
     if (e.marked) e.warnings.push('عليه علامة * في الدفتر الأصلي (يحتاج تأكيد)')
   }
 

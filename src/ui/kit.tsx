@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { formatSAR } from '../lib/money'
+import { IconCheck } from './icons'
 
 // ───────────── التنقل (hash router) ─────────────
 
@@ -55,7 +56,7 @@ export function Toasts() {
     <div className="toast-wrap" role="status" aria-live="polite">
       {list.map((t) => (
         <div key={t.id} className={`toast ${t.kind === 'err' ? 'err' : ''}`}>
-          <span>{t.kind === 'ok' ? '✓' : '!'}</span>
+          {t.kind === 'ok' ? <IconCheck width={18} height={18} /> : <span>!</span>}
           <span>{t.text}</span>
           {t.action && (
             <button className="btn btn-sm" onClick={t.action.run}>

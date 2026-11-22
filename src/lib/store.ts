@@ -129,7 +129,7 @@ export function validateDraft(d: EntryDraft, accounts: Account[] = state.account
   }
   if (debit === 0) errors.push('أدخل المبلغ')
   else if (debit !== credit) errors.push('القيد غير متوازن: مجموع المدين لا يساوي مجموع الدائن')
-  if (debit > 100_000_000_00) errors.push('المبلغ كبير بشكل غير منطقي — تأكد منه')
+  if (debit > 100_000_000_00) errors.push('المبلغ كبير بشكل غير منطقي، تأكد منه')
   return [...new Set(errors)]
 }
 

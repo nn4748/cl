@@ -58,7 +58,7 @@ export async function signUp(email: string, password: string) {
   if (!c) throw new Error('أدخل بيانات Supabase أولاً')
   const { data, error } = await c.auth.signUp({ email, password })
   if (error) throw new Error(translateAuthError(error.message))
-  if (!data.session) return 'تم إنشاء الحساب — افتح بريدك لتأكيده ثم سجّل الدخول'
+  if (!data.session) return 'تم إنشاء الحساب، افتح بريدك لتأكيده ثم سجّل الدخول'
   await syncNow()
   return 'تم إنشاء الحساب وتسجيل الدخول'
 }
@@ -205,9 +205,9 @@ export async function syncNow(): Promise<void> {
 }
 
 function friendly(m: string) {
-  if (/relation .* does not exist|schema cache/i.test(m)) return 'جداول قاعدة البيانات غير موجودة — شغّل ملف supabase/schema.sql'
-  if (/fetch|network/i.test(m)) return 'تعذر الاتصال — سيعاد المحاولة تلقائياً'
-  if (/JWT|auth/i.test(m)) return 'انتهت الجلسة — سجّل الدخول مجدداً'
+  if (/relation .* does not exist|schema cache/i.test(m)) return 'جداول قاعدة البيانات غير موجودة، شغّل ملف supabase/schema.sql'
+  if (/fetch|network/i.test(m)) return 'تعذر الاتصال، سيعاد المحاولة تلقائياً'
+  if (/JWT|auth/i.test(m)) return 'انتهت الجلسة، سجّل الدخول مجدداً'
   return m
 }
 

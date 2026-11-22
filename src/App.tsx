@@ -77,7 +77,7 @@ export default function App() {
         {!app.online && (
           <div className="offline-banner">
             <IconCloudOff width={18} height={18} />
-            أنت بدون إنترنت — القيود تُحفظ على الجهاز وتُرسل تلقائياً عند عودة الاتصال
+            بدون إنترنت · القيود محفوظة على الجهاز
           </div>
         )}
         <div className="view" key={route.path + (route.params.get('edit') ?? '')}>

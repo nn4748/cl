@@ -137,7 +137,7 @@ export default function LinesEditor({
             </div>
             <input
               className="input input-sm full"
-              placeholder="تفاصيل (اختياري) — مثال: شعير 10 أكياس"
+              placeholder="التفاصيل (اختياري)"
               value={r.note}
               onChange={(e) => update(r.key, { note: e.target.value })}
             />
@@ -168,7 +168,7 @@ export default function LinesEditor({
         <span>
           مدين <span className="money">{formatSAR(d)}</span> · دائن <span className="money">{formatSAR(c)}</span>
         </span>
-        <span>{d === c && d > 0 ? 'متوازن ✓' : `الفرق ${formatSAR(Math.abs(diff))}`}</span>
+        <span>{d === c && d > 0 ? 'متوازن' : `الفرق ${formatSAR(Math.abs(diff))}`}</span>
       </div>
     </div>
   )
