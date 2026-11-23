@@ -263,7 +263,12 @@ export async function findDetailUpgrades(entries: Entry[] = state.entries): Prom
   for (const e of entries) {
     if (e.deleted) continue
     const d = byKey.get(accountKey(e.date, e.lines))
-    if (d && d.lines.length > e.lines.length) out.push({ entry: e, draft: d })
+    if (!d) continue
+    const sameShape =
+      d.lines.length === e.lines.length &&
+      d.lines.every((l, i) => l.accountId === e.lines[i].accountId && l.debit === e.lines[i].debit && l.credit === e.lines[i].credit)
+    const notesDiffer = sameShape && d.lines.some((l, i) => (l.note ?? '') !== (e.lines[i].note ?? ''))
+    if (d.lines.length > e.lines.length || (e.source === 'import' && notesDiffer)) out.push({ entry: e, draft: d })
   }
   return out
 }

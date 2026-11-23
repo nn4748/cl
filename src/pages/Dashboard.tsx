@@ -319,7 +319,7 @@ function CorrectionsCard() {
   const list = [
     ...base,
     ...(detailCount || base.some((c) => c.id === 'split' || c.id === 'extra50k')
-      ? [{ id: 'detail' as const, title: 'تفصيل البنود', detail: 'كل صنف بسطر لحاله (سمسم، ذرة، شعير، سوا، راتب…) بنفس التواريخ والمبالغ بدون أي تكرار.' }]
+      ? [{ id: 'detail' as const, title: 'تفصيل البنود', detail: 'كل صنف بسطر لحاله (سمسم، ذرة، شعير، سوا، راتب…) وشحنة الأعلاف مع نقلها بند واحد، بنفس التواريخ والمبالغ بدون أي تكرار.' }]
       : []),
   ]
   if (!list.length) return null

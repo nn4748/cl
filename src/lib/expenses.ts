@@ -169,7 +169,7 @@ export function feedType(label: string): FeedType {
   if (/ذر/.test(t)) return 'ذرة صفراء'
   if (/فول|صويا/.test(t)) return 'فول صويا'
   if (/سمسم/.test(t)) return 'سمسم'
-  if (/اعلاف|علف/.test(t)) return 'أعلاف (شحنة)'
+  if (/شحن|اعلاف|علف/.test(t)) return 'أعلاف (شحنة)'
   return 'أخرى'
 }
 
