@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { OPERATION_LABEL } from '../lib/accounts'
 import { byAccount, byMonth, cashSet, entryDC, totals, type PeriodSum } from '../lib/calc'
 import { fmtDate, fmtMonth, MONTHS_AR, todayISO } from '../lib/format'
 import { formatSAR } from '../lib/money'
-import { applyCorrections, cloudEnabled, pendingCorrections, useApp } from '../lib/store'
+import { applyCorrections, cloudEnabled, findDetailUpgrades, pendingCorrections, useApp } from '../lib/store'
 import type { Entry } from '../lib/types'
 import { expenseItems, monthSums, workerMonths } from '../lib/expenses'
 import { IconBook, IconFile, IconPlus, IconWallet } from '../ui/icons'
@@ -310,7 +310,18 @@ function CorrectionsCard() {
       return []
     }
   })
-  const list = pendingCorrections(entries, dismissed)
+  const [detailCount, setDetailCount] = useState(0)
+  useEffect(() => {
+    void findDetailUpgrades(entries).then((x) => setDetailCount(x.length))
+  }, [entries])
+  const base = pendingCorrections(entries, dismissed)
+  // التفصيل يُحسب بعد التقسيم والتصحيح، لذلك يظهر وحده أو بعدهما
+  const list = [
+    ...base,
+    ...(detailCount || base.some((c) => c.id === 'split' || c.id === 'extra50k')
+      ? [{ id: 'detail' as const, title: 'تفصيل البنود', detail: 'كل صنف بسطر لحاله (سمسم، ذرة، شعير، سوا، راتب…) بنفس التواريخ والمبالغ بدون أي تكرار.' }]
+      : []),
+  ]
   if (!list.length) return null
   const apply = async () => {
     const ok = await confirmDialog({

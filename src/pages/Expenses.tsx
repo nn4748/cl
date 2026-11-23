@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { expenseItems, monthSums, splitNote, WORKER_CAT_LABEL, workerMonths, type WorkerCat } from '../lib/expenses'
+import { bagsOf, expenseItems, feedByType, monthSums, splitNote, WORKER_CAT_LABEL, workerMonths, type FeedType, type WorkerCat } from '../lib/expenses'
 import { dayName, fmtDate, fmtMonth } from '../lib/format'
 import { formatSAR } from '../lib/money'
 import { useApp } from '../lib/store'
@@ -16,7 +16,8 @@ const CAT_COLORS: Record<WorkerCat, string> = {
 
 export default function Expenses() {
   const route = useRoute()
-  const tab = route.params.get('tab') === 'worker' ? 'worker' : 'month'
+  const tabParam = route.params.get('tab')
+  const tab = tabParam === 'worker' ? 'worker' : tabParam === 'feed' ? 'feed' : 'month'
   const month = route.params.get('m')
 
   return (
@@ -32,14 +33,17 @@ export default function Expenses() {
       {!month && (
         <div className="tabs no-print">
           <button className={tab === 'month' ? 'on' : ''} onClick={() => go('/expenses', false)}>
-            مصروفات الشهر
+            الشهور
           </button>
           <button className={tab === 'worker' ? 'on' : ''} onClick={() => go('/expenses?tab=worker', false)}>
-            مصروفات العامل
+            العامل
+          </button>
+          <button className={tab === 'feed' ? 'on' : ''} onClick={() => go('/expenses?tab=feed', false)}>
+            الأعلاف
           </button>
         </div>
       )}
-      {tab === 'month' ? month ? <MonthDetail m={month} /> : <MonthList /> : month ? <WorkerDetail m={month} /> : <WorkerList />}
+      {tab === 'feed' ? <FeedView /> : tab === 'month' ? month ? <MonthDetail m={month} /> : <MonthList /> : month ? <WorkerDetail m={month} /> : <WorkerList />}
     </div>
   )
 }
@@ -194,8 +198,10 @@ function MonthDetail({ m }: { m: string }) {
             {list.map((it, idx) => (
               <div key={it.entryId + idx} className="exp-row" onClick={() => go(`/journal?open=${it.entryId}`)}>
                 <div className="exp-main">
-                  <div className="exp-title">{accName.get(it.accountId)}</div>
-                  {it.note ? (
+                  <div className="exp-title">{it.note && !/[+،]/.test(it.note) ? it.note : accName.get(it.accountId)}</div>
+                  {it.note && !/[+،]/.test(it.note) ? (
+                    <div className="exp-sub">{accName.get(it.accountId)}</div>
+                  ) : it.note ? (
                     <div className="pieces">
                       {splitNote(it.note).map((p, j) => (
                         <span key={j} className="piece">
@@ -327,4 +333,78 @@ function groupByDate<T extends { date: string }>(list: T[]): [string, T[]][] {
   const map = new Map<string, T[]>()
   for (const it of list) map.set(it.date, [...(map.get(it.date) ?? []), it])
   return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+}
+
+const FEED_COLORS = ['#503626', '#A67C52', '#7a8f5a', '#c29a5b', '#8c6d5a', '#b9a690', '#6b4f3a', '#d2b48c', '#9c8572', '#cfc2b0']
+
+function FeedView() {
+  const { items } = useItems()
+  const [month, setMonth] = useState<string>('')
+  const [open, setOpen] = useState<FeedType | null>(null)
+  const feedItems = items.filter((i) => i.accountId === 'feed')
+  const months = [...new Set(feedItems.map((i) => i.date.slice(0, 7)))].sort().reverse()
+  const shown = month ? feedItems.filter((i) => i.date.startsWith(month)) : feedItems
+  const types = feedByType(shown)
+  const total = types.reduce((s, t) => s + t.total, 0)
+  if (!feedItems.length) return <Empty text="سجّل أول شراء أعلاف وسيظهر هنا حسب الصنف" />
+  return (
+    <div className="stack">
+      <div className="filters">
+        <button className={`chip chip-sm ${!month ? 'on' : ''}`} onClick={() => setMonth('')}>
+          كل الشهور
+        </button>
+        {months.map((m) => (
+          <button key={m} className={`chip chip-sm ${month === m ? 'on' : ''}`} onClick={() => setMonth(m)}>
+            {fmtMonth(m)}
+          </button>
+        ))}
+      </div>
+      <section className="hero">
+        <div className="hero-label">الأعلاف {month ? `· ${fmtMonth(month)}` : '· كل الفترة'}</div>
+        <div className="hero-value money">
+          {formatSAR(total)}
+          <span className="cur">ر.س</span>
+        </div>
+        <div className="stackbar">
+          {types.map((t, i) => (
+            <span key={t.type} style={{ width: `${(t.total / total) * 100}%`, background: FEED_COLORS[i % FEED_COLORS.length] }} />
+          ))}
+        </div>
+      </section>
+      <section className="card">
+        <h2 className="card-title">حسب الصنف</h2>
+        {types.map((t, i) => (
+          <div key={t.type}>
+            <button className={`cat-row ${open === t.type ? 'on' : ''}`} onClick={() => setOpen(open === t.type ? null : t.type)}>
+              <span className="cat-name">
+                <span className="dot" style={{ background: FEED_COLORS[i % FEED_COLORS.length], marginInlineEnd: 8 }} />
+                {t.type}
+              </span>
+              <span className="cat-pct">{t.bags ? `${t.bags} كيس` : `${t.items.length} ${t.items.length === 1 ? "مرة" : "مرات"}`}</span>
+              <span className="cat-amt money">{formatSAR(t.total)}</span>
+              <span className="bar-track">
+                <span className="bar-fill" style={{ display: 'block', width: `${Math.max(2, (t.total / types[0].total) * 100)}%` }} />
+              </span>
+            </button>
+            {open === t.type && (
+              <div style={{ padding: '0 4px 8px' }}>
+                {t.items.map((it, j) => (
+                  <div key={it.entryId + j} className="exp-row" onClick={() => go(`/journal?open=${it.entryId}`)}>
+                    <div className="exp-main">
+                      <div className="exp-title">{it.note || it.description}</div>
+                      <div className="exp-sub">
+                        {dayName(it.date)} {fmtDate(it.date)}
+                        {bagsOf(it.note) ? ` · ${formatSAR(Math.round(it.amount / bagsOf(it.note)!))} للكيس` : ''}
+                      </div>
+                    </div>
+                    <div className="amt debit">{formatSAR(it.amount)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </section>
+    </div>
+  )
 }

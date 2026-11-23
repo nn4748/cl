@@ -248,8 +248,28 @@ export function hasAhmed1000(entries: Entry[] = state.entries): boolean {
   return entries.some((e) => !e.deleted && e.date >= '2026-11-15' && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00) && e.description.includes('أحمد'))
 }
 
+/** مفتاح مقارنة: التاريخ + مجموع كل حساب — يطابق القيد نفسه مهما اختلف تفصيل أسطره */
+function accountKey(date: string, lines: EntryLine[]) {
+  const m = new Map<string, number>()
+  for (const l of lines) m.set(l.accountId, (m.get(l.accountId) ?? 0) + l.debit - l.credit)
+  return date + '|' + [...m.entries()].filter(([, v]) => v !== 0).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}:${v}`).join(',')
+}
+
+/** قيود موجودة على الجهاز بصيغة مجمّعة ولها نسخة مفصّلة (كل صنف بسطر) بنفس الأرقام */
+export async function findDetailUpgrades(entries: Entry[] = state.entries): Promise<{ entry: Entry; draft: EntryDraft }[]> {
+  const { ORIGINAL_JOURNAL } = await import('./seed')
+  const byKey = new Map(ORIGINAL_JOURNAL.map((d) => [accountKey(d.date, d.lines), d]))
+  const out: { entry: Entry; draft: EntryDraft }[] = []
+  for (const e of entries) {
+    if (e.deleted) continue
+    const d = byKey.get(accountKey(e.date, e.lines))
+    if (d && d.lines.length > e.lines.length) out.push({ entry: e, draft: d })
+  }
+  return out
+}
+
 export interface Correction {
-  id: 'split' | 'extra50k' | 'ahmed'
+  id: 'split' | 'extra50k' | 'ahmed' | 'detail'
   title: string
   detail: string
 }
@@ -299,6 +319,12 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
     const e = findExtra50k()
     if (e) {
       await updateEntry(e.id, without50k(e))
+      n += 1
+    }
+  }
+  if (ids.includes('detail')) {
+    for (const { entry, draft } of await findDetailUpgrades()) {
+      await updateEntry(entry.id, { ...draft, number: undefined, flagged: entry.flagged || draft.flagged, flagNote: entry.flagNote || draft.flagNote })
       n += 1
     }
   }

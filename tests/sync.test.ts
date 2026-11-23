@@ -220,3 +220,25 @@ describe('تصحيح الـ 50,000 على جهاز طُبّق عليه التف�
     expect(a.store.pendingCorrections()).toHaveLength(0)
   })
 })
+
+describe('جهاز الأب: الدفتر القديم (14 قيد مجمّع) ← بعد كل التصحيحات', () => {
+  it('يطابق الدفتر المفصّل الجديد تماماً بدون تكرار', async () => {
+    const a = await device()
+    const old = await import('./fixtures/oldSeed')
+    for (const d of old.ORIGINAL_JOURNAL) await a.store.addEntry({ ...d, number: undefined }, 'import')
+    // تطبيق كما يفعل زر «مراجعة وتطبيق»
+    await a.store.applyCorrections([...a.store.pendingCorrections().map((c) => c.id), 'detail'])
+    const st = a.store.getState()
+    const seed = await import('../src/lib/seed')
+    const { byAccount, totals, cashSet } = await import('../src/lib/calc')
+    const live = st.entries.filter((e) => !e.deleted)
+    expect(live).toHaveLength(seed.ORIGINAL_JOURNAL.length)
+    expect(totals(live, cashSet(st.accounts)).debit).toBe(seed.ORIGINAL_TOTAL_HALALA)
+    const lineCount = (es: { lines: unknown[] }[]) => es.reduce((s, e) => s + e.lines.length, 0)
+    expect(lineCount(live)).toBe(lineCount(seed.ORIGINAL_JOURNAL))
+    const bal = Object.fromEntries(byAccount(live, st.accounts).map((x) => [x.account.id, x.balance / 100]))
+    expect(bal).toMatchObject({ livestock: 148000, feed: 52569, wages: 6953, cash: -248938 })
+    expect(await a.store.findDetailUpgrades()).toHaveLength(0)
+    expect(a.store.pendingCorrections()).toHaveLength(0)
+  })
+})

@@ -132,7 +132,9 @@ export function workerMonths(items: ExpenseItem[], accounts: Account[]): WorkerM
     if (!workerIds.has(it.accountId)) continue
     const key = it.date.slice(0, 7)
     const m = map.get(key) ?? { key, total: 0, cats: { salary: 0, phone: 0, food: 0, bonus: 0, other: 0 }, items: [] }
-    const pieces = it.note ? splitNote(it.note) : []
+    let pieces = it.note ? splitNote(it.note) : []
+    // سطر لبند واحد بدون رقم (مثل «سوا»): المبلغ كله لهذا البند
+    if (pieces.length === 1 && pieces[0].amount == null) pieces = [{ ...pieces[0], amount: it.amount }]
     // نوزع مبلغ السطر على التصنيفات؛ أي فرق يذهب إلى «أخرى» حتى يبقى المجموع مطابقاً للقيد
     let assigned = 0
     for (const p of pieces) {
@@ -150,4 +152,50 @@ export function workerMonths(items: ExpenseItem[], accounts: Account[]): WorkerM
     map.set(key, m)
   }
   return [...map.values()].sort((a, b) => b.key.localeCompare(a.key))
+}
+
+// ───────────── تفصيل الأعلاف حسب الصنف ─────────────
+
+export const FEED_TYPES = ['شعير', 'ذرة صفراء', 'فول صويا', 'سمسم', 'نخالة سمسم', 'الطحن', 'شعير وذرة (مبلغ واحد)', 'أصناف مخلوطة', 'أعلاف (شحنة)', 'أخرى'] as const
+export type FeedType = (typeof FEED_TYPES)[number]
+
+export function feedType(label: string): FeedType {
+  const t = label.replace(/[أإآ]/g, 'ا')
+  if (/نخال/.test(t)) return 'نخالة سمسم'
+  if (/\+/.test(t)) return 'أصناف مخلوطة'
+  if (/شعير و\s*ذر|شعير وذر/.test(t)) return 'شعير وذرة (مبلغ واحد)'
+  if (/طاحون|مطحن|طحن/.test(t)) return 'الطحن'
+  if (/شعير/.test(t)) return 'شعير'
+  if (/ذر/.test(t)) return 'ذرة صفراء'
+  if (/فول|صويا/.test(t)) return 'فول صويا'
+  if (/سمسم/.test(t)) return 'سمسم'
+  if (/اعلاف|علف/.test(t)) return 'أعلاف (شحنة)'
+  return 'أخرى'
+}
+
+/** عدد الأكياس من نص مثل «شعير 10 أكياس» أو «سمسم 12 كيس» */
+export function bagsOf(label: string): number | null {
+  const m = label.match(/(\d+)\s*(?:كيس|أكياس|اكياس)/)
+  return m ? Number(m[1]) : null
+}
+
+export interface FeedTypeSum {
+  type: FeedType
+  total: Halala
+  bags: number
+  items: ExpenseItem[]
+}
+
+export function feedByType(items: ExpenseItem[]): FeedTypeSum[] {
+  const map = new Map<FeedType, FeedTypeSum>()
+  for (const it of items) {
+    if (it.accountId !== 'feed') continue
+    const type = feedType(it.note || it.description)
+    const cur = map.get(type) ?? { type, total: 0, bags: 0, items: [] }
+    cur.total += it.amount
+    cur.bags += bagsOf(it.note) ?? 0
+    cur.items.push(it)
+    map.set(type, cur)
+  }
+  return [...map.values()].sort((a, b) => b.total - a.total)
 }
