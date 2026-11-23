@@ -244,6 +244,13 @@ export function findExtra50k(entries: Entry[] = state.entries): Entry | undefine
   return entries.find((e) => !e.deleted && e.date === '2026-09-07' && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 50_000_00))
 }
 
+/** العربون 5,000 والتحويل 97,420 مسجلان كقيدين — والصحيح بند واحد 102,420 (أول صفقة) */
+function findDeposit(entries: Entry[] = state.entries) {
+  const dep = entries.find((e) => !e.deleted && e.date === '2026-08-12' && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 5_000_00) && e.lines.filter((l) => l.debit > 0).length === 1)
+  const transfer = entries.find((e) => !e.deleted && e.date === '2026-08-13' && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 97_420_00))
+  return dep && transfer ? { dep, transfer } : undefined
+}
+
 const TWO_SALARIES = (e: Entry) => !e.deleted && e.date === '2026-11-20' && e.lines.filter((l) => l.accountId === 'wages' && l.debit === 1_000_00).length >= 2
 
 /** القيد القديم: حساب أحمد 1,000 بسطر واحد (قبل توضيح الأب أنهما راتبين) */
@@ -259,7 +266,8 @@ export function hasAhmed1000(entries: Entry[] = state.entries): boolean {
 
 /** هل أرقام القيود لا تتبع ترتيب التواريخ؟ */
 export function numbersOutOfOrder(entries: Entry[] = state.entries): boolean {
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number)
+  const byDate = (a: Entry, b: Entry) => a.date.localeCompare(b.date) || a.number - b.number
+  const sorted = [...entries.filter((e) => !e.deleted).sort(byDate), ...entries.filter((e) => e.deleted).sort(byDate)]
   return sorted.some((e, i) => e.number !== i + 1)
 }
 
@@ -267,7 +275,9 @@ export function numbersOutOfOrder(entries: Entry[] = state.entries): boolean {
 export async function renumberByDate(): Promise<number> {
   const all = await DB.getAllEntries()
   if (all.some((e) => e.serverUpdatedAt)) throw new Error('القيود مرفوعة للمزامنة السحابية، لا يمكن تغيير أرقامها')
-  const sorted = [...all].sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number || a.createdAt.localeCompare(b.createdAt))
+  const byDate = (a: Entry, b: Entry) => a.date.localeCompare(b.date) || a.number - b.number || a.createdAt.localeCompare(b.createdAt)
+  // القيود الفعّالة أولاً بالتسلسل، والملغاة بعدها حتى لا تترك فراغات في الأرقام
+  const sorted = [...all.filter((e) => !e.deleted).sort(byDate), ...all.filter((e) => e.deleted).sort(byDate)]
   let changed = 0
   for (let i = 0; i < sorted.length; i++) {
     const e = sorted[i]
@@ -305,7 +315,7 @@ export async function findDetailUpgrades(entries: Entry[] = state.entries): Prom
 }
 
 export interface Correction {
-  id: 'split' | 'extra50k' | 'ahmed' | 'detail' | 'order'
+  id: 'split' | 'extra50k' | 'merge' | 'ahmed' | 'detail' | 'order'
   title: string
   detail: string
 }
@@ -320,9 +330,11 @@ export function pendingCorrections(entries: Entry[] = state.entries, dismissed: 
     })
   else if (findExtra50k(entries))
     out.push({ id: 'extra50k', title: 'تصحيح قيمة الحلال', detail: 'حذف 50,000 الزائدة: قيمة الحلال 102,420 + 45,580 = 148,000 وليست 198,000.' })
+  if (findDeposit(entries))
+    out.push({ id: 'merge', title: 'أول صفقة حلال بند واحد 102,420', detail: 'العربون 5,000 والتحويل 97,420 يصيرون بند واحد «قيمة أول صفقة» 102,420 بتاريخ 13 أغسطس.' })
   if (!hasAhmed1000(entries) && !dismissed.includes('ahmed') && entries.length > 0)
     out.push({ id: 'ahmed', title: 'راتبين 1,000 + 1,000', detail: 'من 10 جمادى الآخرة إلى 10 رجب (بتاريخ 20 نوفمبر).' })
-  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed')
+  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge')
   if ((willChange || numbersOutOfOrder(entries)) && !entries.some((e) => e.serverUpdatedAt))
     out.push({ id: 'order', title: 'ترتيب الأرقام حسب التاريخ', detail: 'القيود تترقم 1، 2، 3… من الأقدم للأحدث.' })
   return out
@@ -361,6 +373,21 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
       n += 1
     }
   }
+  if (ids.includes('merge')) {
+    const f = findDeposit()
+    if (f) {
+      const lines = f.transfer.lines.map((l) =>
+        l.accountId === 'livestock' && l.debit === 97_420_00
+          ? { ...l, debit: 102_420_00, note: 'قيمة أول صفقة حلال (عربون 5,000 يوم 12/8 + تحويل 97,420)' }
+          : l.accountId === 'cash' && l.credit > 0
+            ? { ...l, credit: l.credit + 5_000_00 }
+            : l,
+      )
+      await updateEntry(f.transfer.id, { date: f.transfer.date, description: 'أول صفقة حلال + أعلاف وعلاج', type: f.transfer.type, lines, flagged: f.transfer.flagged, flagNote: f.transfer.flagNote })
+      await setDeleted(f.dep.id, true)
+      n += 1
+    }
+  }
   if (ids.includes('detail')) {
     for (const { entry, draft } of await findDetailUpgrades()) {
       await updateEntry(entry.id, { ...draft, number: undefined, flagged: entry.flagged || draft.flagged, flagNote: entry.flagNote || draft.flagNote })
@@ -384,5 +411,5 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
 export async function applyAugustSplit(): Promise<number> {
   if (!findCombinedEntry1()) return 0
   await applyCorrections(['split'])
-  return 4
+  return 3
 }

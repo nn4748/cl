@@ -30,9 +30,8 @@ function entry(number: number, date: string, description: string, debits: L[], f
  * المجموع = 276,066 بالضبط، نفس القيد 1 في الدفتر — لا تكرار.
  */
 export const AUGUST_SPLIT: EntryDraft[] = [
-  entry(0, '2026-08-12', 'عربون الحلال', [['livestock', 5000, 'عربون أول صفقة']]),
-  entry(0, '2026-08-13', 'تحويل قيمة الحلال + أعلاف وعلاج', [
-    ['livestock', 97420, 'تحويل قيمة الحلال (أول صفقة)'],
+  entry(0, '2026-08-13', 'أول صفقة حلال + أعلاف وعلاج', [
+    ['livestock', 102420, 'قيمة أول صفقة حلال (عربون 5,000 يوم 12/8 + تحويل 97,420)'],
     ['transport', 700, 'دينا نقل حلال'],
     ['feed', 800, 'شعير 8 أكياس'],
     ['feed', 39816, 'شحنة أعلاف مع نقلها وتحميلها وتنزيلها (عملية واحدة)'],
@@ -74,7 +73,7 @@ export const AHMED_1000: EntryDraft = entry(0, '2026-11-20', 'راتبين (من
   ['wages', 1000, 'راتب 1,000 (من 10 جمادى الآخرة إلى 10 رجب)'],
 ])
 
-export const ORIGINAL_JOURNAL: EntryDraft[] = [
+const JOURNAL: EntryDraft[] = [
   ...AUGUST_SPLIT.map((d, i) => numbered(d, i + 1)),
   numbered(AUGUST_REMAINDER, 5),
   entry(
@@ -188,6 +187,9 @@ export const ORIGINAL_JOURNAL: EntryDraft[] = [
   ]),
   numbered(AHMED_1000, 19),
 ]
+
+/** الأرقام تُعطى بالتسلسل حسب الترتيب الزمني */
+export const ORIGINAL_JOURNAL: EntryDraft[] = JOURNAL.map((d, i) => ({ ...d, number: i + 1 }))
 
 /**
  * المجموع بعد تصحيح الأب: قيمة الحلال 148,000 (أول صفقة 102,420 + الثانية 45,580)

@@ -39,7 +39,7 @@ describe('دفتر مشروع الحلال الأصلي', () => {
     expect(t.debit).toBe(ORIGINAL_TOTAL_HALALA)
     expect(t.credit).toBe(0)
     expect(t.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(t.count).toBe(19)
+    expect(t.count).toBe(18)
     expect(t.ledgerBalanced).toBe(true)
     expect(t.cashBalance).toBe(-ORIGINAL_TOTAL_HALALA)
   })
@@ -62,7 +62,7 @@ describe('دفتر مشروع الحلال الأصلي', () => {
   it('الرصيد التراكمي ينتهي بالمجموع', () => {
     const rows = journalRows(toEntries(), cash)
     expect(rows.at(-1)!.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(rows[0].balance).toBe(500000)
-    expect(rows.filter((r) => r.entry.date.startsWith('2026-08')).length).toBe(4)
+    expect(rows[0].balance).toBe(14509100)
+    expect(rows.filter((r) => r.entry.date.startsWith('2026-08')).length).toBe(3)
   })
 })

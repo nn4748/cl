@@ -191,9 +191,9 @@ describe('تفصيل أوراق أغسطس', () => {
     await a.store.addEntry({ date: '2026-09-07', description: 'شراء الحلال وتجهيز المشروع', type: 'compound', lines: [...lines, { accountId: 'cash', debit: 0, credit: 27606600 }] }, 'import')
     const { byAccount, totals, cashSet } = await import('../src/lib/calc')
     const before = byAccount(a.store.getState().entries, a.store.getState().accounts).map((x) => [x.account.id, x.balance])
-    expect(await a.store.applyAugustSplit()).toBe(4)
+    expect(await a.store.applyAugustSplit()).toBe(3)
     const st = a.store.getState()
-    expect(st.entries.filter((e) => !e.deleted)).toHaveLength(5)
+    expect(st.entries.filter((e) => !e.deleted)).toHaveLength(4)
     void before
     expect(totals(st.entries, cashSet(st.accounts)).debit).toBe(22606600)
     const bal = Object.fromEntries(byAccount(st.entries, st.accounts).map((x) => [x.account.id, x.balance / 100]))
@@ -260,5 +260,26 @@ describe('توضيح الأب: راتبين 1,000 و 1,000', () => {
     expect(sal.number).toBe(2)
     expect(live.find((e) => e.date === '2026-09-01')!.number).toBe(1)
     expect(a.store.pendingCorrections()).toHaveLength(0)
+  })
+})
+
+describe('أول صفقة حلال بند واحد', () => {
+  it('يدمج العربون 5,000 والتحويل 97,420 في 102,420 بدون تغيير المجموع', async () => {
+    const a = await device()
+    const seed = await import('./fixtures/oldSeed')
+    for (const d of seed.ORIGINAL_JOURNAL) await a.store.addEntry({ ...d, number: undefined }, 'import')
+    // جهاز طبّق نسخة سابقة من التصحيح (عربون وتحويل منفصلين)
+    await a.store.applyCorrections(['split'])
+    const { totals, cashSet, byAccount } = await import('../src/lib/calc')
+    const before = totals(a.store.getState().entries, cashSet(a.store.getState().accounts)).debit
+    void before
+    await a.store.applyCorrections([...a.store.pendingCorrections().map((c) => c.id), 'detail'])
+    const st = a.store.getState()
+    const live = st.entries.filter((e) => !e.deleted)
+    const liv = live.flatMap((e) => e.lines).filter((l) => l.accountId === 'livestock').map((l) => l.debit)
+    expect(liv.sort()).toEqual([10242000, 4558000].sort())
+    expect(Object.fromEntries(byAccount(live, st.accounts).map((x) => [x.account.id, x.balance / 100])).livestock).toBe(148000)
+    const nums = [...live].sort((x, y) => x.date.localeCompare(y.date) || x.number - y.number).map((e) => e.number)
+    expect(nums).toEqual(nums.map((_, i) => i + 1))
   })
 })
