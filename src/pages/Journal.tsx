@@ -20,7 +20,7 @@ export default function Journal() {
   const [type, setType] = useState<OperationType | ''>('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
-  const [order, setOrder] = useState<'desc' | 'asc'>('desc')
+  const [order, setOrder] = useState<'desc' | 'asc'>('asc')
   const [detailed, setDetailed] = useState(false)
   const [showDeleted, setShowDeleted] = useState(false)
   const [showFilters, setShowFilters] = useState(false)

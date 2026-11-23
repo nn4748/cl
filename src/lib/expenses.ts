@@ -31,7 +31,7 @@ export function expenseItems(entries: Entry[], accounts: Account[]): ExpenseItem
       })
     }
   }
-  return out.sort((a, b) => b.date.localeCompare(a.date) || b.entryNumber - a.entryNumber)
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.entryNumber - b.entryNumber)
 }
 
 export interface MonthSum {
@@ -58,7 +58,7 @@ export function monthSums(items: ExpenseItem[]): MonthSum[] {
       count: m.count,
       byAccount: [...m.acc.entries()].map(([accountId, total]) => ({ accountId, total })).sort((a, b) => b.total - a.total),
     }))
-    .sort((a, b) => b.key.localeCompare(a.key))
+    .sort((a, b) => a.key.localeCompare(b.key))
 }
 
 /** حسابات العمالة: حساب الرواتب أو أي حساب اسمه يدل على العامل */
@@ -151,7 +151,7 @@ export function workerMonths(items: ExpenseItem[], accounts: Account[]): WorkerM
     m.items.push({ ...it, pieces })
     map.set(key, m)
   }
-  return [...map.values()].sort((a, b) => b.key.localeCompare(a.key))
+  return [...map.values()].sort((a, b) => a.key.localeCompare(b.key))
 }
 
 // ───────────── تفصيل الأعلاف حسب الصنف ─────────────

@@ -33,7 +33,7 @@ describe('المبالغ', () => {
 
 describe('دفتر مشروع الحلال الأصلي', () => {
   const cash = cashSet(DEFAULT_ACCOUNTS)
-  it('كل القيود متوازنة والمجموع 248,938 بعد التصحيح', () => {
+  it('كل القيود متوازنة والمجموع 249,938 بعد التصحيح', () => {
     const entries = toEntries()
     const t = totals(entries, cash)
     expect(t.debit).toBe(ORIGINAL_TOTAL_HALALA)
@@ -51,12 +51,12 @@ describe('دفتر مشروع الحلال الأصلي', () => {
       well: 18050,
       rent: 10000,
       equipment: 7053,
-      wages: 6953,
+      wages: 7953,
       vet: 3315,
       transport: 2573,
       maintenance: 320,
       misc: 105,
-      cash: -248938,
+      cash: -249938,
     })
   })
   it('الرصيد التراكمي ينتهي بالمجموع', () => {

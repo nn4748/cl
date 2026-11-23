@@ -36,8 +36,8 @@ export default function Dashboard() {
   )
 
   const expItems = expenseItems(entries, accounts)
-  const lastExpMonth = monthSums(expItems)[0]
-  const lastWorker = workerMonths(expItems, accounts)[0]
+  const lastExpMonth = monthSums(expItems).at(-1)
+  const lastWorker = workerMonths(expItems, accounts).at(-1)
 
   if (t.count === 0) {
     return (

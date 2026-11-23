@@ -118,7 +118,7 @@ function MonthList() {
         </div>
       </div>
       {months.map((m, i) => (
-        <MonthCard key={m.key} k={m.key} total={m.total} max={max} prev={months[i + 1]?.total} sub={`${m.count} بند · ${m.byAccount.length} أبواب`} onClick={() => go(`/expenses?m=${m.key}`)} />
+        <MonthCard key={m.key} k={m.key} total={m.total} max={max} prev={months[i - 1]?.total} sub={`${m.count} بند · ${m.byAccount.length} أبواب`} onClick={() => go(`/expenses?m=${m.key}`)} />
       ))}
     </div>
   )
@@ -253,7 +253,7 @@ function WorkerList() {
           k={m.key}
           total={m.total}
           max={max}
-          prev={months[i + 1]?.total}
+          prev={months[i - 1]?.total}
           sub={`راتب ${formatSAR(m.cats.salary)} · سوا ${formatSAR(m.cats.phone)} · مقاضي ${formatSAR(m.cats.food)}`}
           onClick={() => go(`/expenses?tab=worker&m=${m.key}`)}
         />
@@ -332,7 +332,7 @@ function WorkerDetail({ m }: { m: string }) {
 function groupByDate<T extends { date: string }>(list: T[]): [string, T[]][] {
   const map = new Map<string, T[]>()
   for (const it of list) map.set(it.date, [...(map.get(it.date) ?? []), it])
-  return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 }
 
 const FEED_COLORS = ['#503626', '#A67C52', '#7a8f5a', '#c29a5b', '#8c6d5a', '#b9a690', '#6b4f3a', '#d2b48c', '#9c8572', '#cfc2b0']
@@ -342,7 +342,7 @@ function FeedView() {
   const [month, setMonth] = useState<string>('')
   const [open, setOpen] = useState<FeedType | null>(null)
   const feedItems = items.filter((i) => i.accountId === 'feed')
-  const months = [...new Set(feedItems.map((i) => i.date.slice(0, 7)))].sort().reverse()
+  const months = [...new Set(feedItems.map((i) => i.date.slice(0, 7)))].sort()
   const shown = month ? feedItems.filter((i) => i.date.startsWith(month)) : feedItems
   const types = feedByType(shown)
   const total = types.reduce((s, t) => s + t.total, 0)

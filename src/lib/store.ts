@@ -244,8 +244,39 @@ export function findExtra50k(entries: Entry[] = state.entries): Entry | undefine
   return entries.find((e) => !e.deleted && e.date === '2026-09-07' && e.lines.some((l) => l.accountId === 'livestock' && l.debit === 50_000_00))
 }
 
+const TWO_SALARIES = (e: Entry) => !e.deleted && e.date === '2026-11-20' && e.lines.filter((l) => l.accountId === 'wages' && l.debit === 1_000_00).length >= 2
+
+/** القيد القديم: حساب أحمد 1,000 بسطر واحد (قبل توضيح الأب أنهما راتبين) */
+function findOldAhmed(entries: Entry[] = state.entries): Entry | undefined {
+  return entries.find(
+    (e) => !e.deleted && e.description.includes('أحمد') && e.date >= '2026-11-15' && e.lines.length === 2 && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00),
+  )
+}
+
 export function hasAhmed1000(entries: Entry[] = state.entries): boolean {
-  return entries.some((e) => !e.deleted && e.date >= '2026-11-15' && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00) && e.description.includes('أحمد'))
+  return entries.some(TWO_SALARIES)
+}
+
+/** هل أرقام القيود لا تتبع ترتيب التواريخ؟ */
+export function numbersOutOfOrder(entries: Entry[] = state.entries): boolean {
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number)
+  return sorted.some((e, i) => e.number !== i + 1)
+}
+
+/** إعادة ترقيم القيود 1، 2، 3… حسب التاريخ (فقط إن لم تكن مرفوعة لقاعدة بيانات سحابية) */
+export async function renumberByDate(): Promise<number> {
+  const all = await DB.getAllEntries()
+  if (all.some((e) => e.serverUpdatedAt)) throw new Error('القيود مرفوعة للمزامنة السحابية، لا يمكن تغيير أرقامها')
+  const sorted = [...all].sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number || a.createdAt.localeCompare(b.createdAt))
+  let changed = 0
+  for (let i = 0; i < sorted.length; i++) {
+    const e = sorted[i]
+    if (e.number === i + 1) continue
+    await DB.putEntryWithAudit({ ...e, number: i + 1, updatedAt: new Date().toISOString() }, 'update')
+    changed++
+  }
+  await reloadEntries()
+  return changed
 }
 
 /** مفتاح مقارنة: التاريخ + مجموع كل حساب — يطابق القيد نفسه مهما اختلف تفصيل أسطره */
@@ -274,7 +305,7 @@ export async function findDetailUpgrades(entries: Entry[] = state.entries): Prom
 }
 
 export interface Correction {
-  id: 'split' | 'extra50k' | 'ahmed' | 'detail'
+  id: 'split' | 'extra50k' | 'ahmed' | 'detail' | 'order'
   title: string
   detail: string
 }
@@ -290,7 +321,10 @@ export function pendingCorrections(entries: Entry[] = state.entries, dismissed: 
   else if (findExtra50k(entries))
     out.push({ id: 'extra50k', title: 'تصحيح قيمة الحلال', detail: 'حذف 50,000 الزائدة: قيمة الحلال 102,420 + 45,580 = 148,000 وليست 198,000.' })
   if (!hasAhmed1000(entries) && !dismissed.includes('ahmed') && entries.length > 0)
-    out.push({ id: 'ahmed', title: 'حساب أحمد 1,000 ريال', detail: 'من 10 جمادى الآخرة إلى 10 رجب 1448 (يُسجّل بتاريخ 20 نوفمبر).' })
+    out.push({ id: 'ahmed', title: 'راتبين 1,000 + 1,000', detail: 'من 10 جمادى الآخرة إلى 10 رجب (بتاريخ 20 نوفمبر).' })
+  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed')
+  if ((willChange || numbersOutOfOrder(entries)) && !entries.some((e) => e.serverUpdatedAt))
+    out.push({ id: 'order', title: 'ترتيب الأرقام حسب التاريخ', detail: 'القيود تترقم 1، 2، 3… من الأقدم للأحدث.' })
   return out
 }
 
@@ -334,7 +368,13 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
     }
   }
   if (ids.includes('ahmed') && !hasAhmed1000()) {
-    await addEntry({ ...seed.AHMED_1000, number: undefined })
+    const old = findOldAhmed()
+    if (old) await updateEntry(old.id, { ...seed.AHMED_1000, number: undefined })
+    else await addEntry({ ...seed.AHMED_1000, number: undefined })
+    n += 1
+  }
+  if (ids.includes('order') && numbersOutOfOrder()) {
+    await renumberByDate()
     n += 1
   }
   return n
