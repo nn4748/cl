@@ -64,6 +64,6 @@ describe('دفتر مشروع الحلال الأصلي', () => {
     expect(rows.at(-1)!.balance).toBe(ORIGINAL_TOTAL_HALALA)
     expect(rows[0].balance).toBe(100000)
     expect(rows.filter((r) => r.entry.date.startsWith('2026-08')).length).toBe(3)
-    expect(rows.filter((r) => r.entry.date.startsWith('2026-11') && r.entry.lines.some((l) => l.debit === 100000))).toHaveLength(0)
+    expect(rows.filter((r) => r.entry.date === '2026-11-20')).toHaveLength(0)
   })
 })
