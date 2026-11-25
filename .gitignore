@@ -27,3 +27,6 @@ dist-ssr
 tests/fixtures/*.pdf
 .env
 .env.local
+
+# تقارير PDF المولّدة (بيانات خاصة)
+reports/
