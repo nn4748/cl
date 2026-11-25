@@ -115,18 +115,7 @@ const period = `من ${longDate(dates[0])} إلى ${longDate(dates.at(-1)!)}`
 function journalHtml() {
   let html = `<div class="head"><div><h1>دفتر اليومية</h1><div class="sub">مشروع الحلال · ${period}</div></div><div class="sub">المبالغ بالريال السعودي</div></div>`
 
-  const byAcc = new Map<string, number>()
-  for (const i of items) byAcc.set(i.accountId, (byAcc.get(i.accountId) ?? 0) + i.amount)
-  html += `<div class="boxes">
-    <div class="box dark"><div class="k">إجمالي المصروف</div><div class="v num">${money(total)}</div></div>
-    <div class="box"><div class="k">عدد الأيام</div><div class="v num">${dates.length}</div></div>
-    <div class="box"><div class="k">عدد البنود</div><div class="v num">${items.length}</div></div></div>`
-  html += `<h2>الملخص: وين راحت الفلوس؟</h2><table><tr><th>الباب</th><th class="n">المبلغ</th><th class="c">النسبة</th></tr>`
-  for (const [id, v] of [...byAcc.entries()].sort((a, b) => b[1] - a[1]))
-    html += `<tr><td>${esc(accName.get(id) ?? id)}</td><td class="n num">${money(v)}</td><td class="c num">${Math.round((v / total) * 100)}%</td></tr>`
-  html += `<tr class="total"><td>المجموع</td><td class="n num">${money(total)}</td><td class="c">100%</td></tr></table>`
-
-  html += `<h2 class="pb">المصروفات يوم بيوم</h2>`
+  html += `<h2>المصروفات يوم بيوم</h2>`
   let run = 0
   for (const date of dates) {
     const list = items.filter((i) => i.date === date)
