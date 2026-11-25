@@ -269,6 +269,16 @@ function findOctRemovals(entries: Entry[] = state.entries): Entry[] {
   )
 }
 
+/** مقاضي العثيم 116 + 15 + 15 (146) مسجلة مع 10 سبتمبر وهي من أغسطس */
+function findSepWithAugFood(entries: Entry[] = state.entries): Entry | undefined {
+  return entries.find(
+    (e) =>
+      !e.deleted &&
+      e.date === '2026-09-10' &&
+      (e.lines.some((l) => l.accountId === 'wages' && l.debit === 116_00) || e.lines.some((l) => /116/.test(l.note ?? '') && l.accountId === 'wages')),
+  )
+}
+
 const isSalary1000 = (e: Entry, date: string) => !e.deleted && e.date === date && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00)
 
 /** الصيغ القديمة لراتبي 10/6 و 10/7 في نوفمبر: «راتبين» بسطرين، أو «حساب أحمد 1,000» */
@@ -337,7 +347,7 @@ export async function findDetailUpgrades(entries: Entry[] = state.entries): Prom
 }
 
 export interface Correction {
-  id: 'split' | 'extra50k' | 'merge' | 'ahmed' | 'drop405' | 'detail' | 'dropOct' | 'aug' | 'order'
+  id: 'split' | 'extra50k' | 'merge' | 'ahmed' | 'drop405' | 'detail' | 'dropOct' | 'aug' | 'augFood' | 'order'
   title: string
   detail: string
 }
@@ -361,7 +371,9 @@ export function pendingCorrections(entries: Entry[] = state.entries, dismissed: 
     out.push({ id: 'dropOct', title: 'أكتوبر: حذف مكافأة أحمد وجوال العامل الإثيوبي', detail: 'تنحذف مكافأة أحمد 250 (30 أكتوبر) وجوال العامل الإثيوبي 115 (25 أكتوبر).' })
   if (entries.length > 0 && !entries.some((e) => !e.deleted && e.date.startsWith('2026-08') && e.lines.some((l) => l.accountId === 'wages' && /راتب/.test(l.note ?? ''))))
     out.push({ id: 'aug', title: 'راتب العامل شهر 8', detail: 'إضافة راتب 1,000 بتاريخ 10 أغسطس.' })
-  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge' || c.id === 'drop405' || c.id === 'dropOct' || c.id === 'aug')
+  if (findSepWithAugFood(entries))
+    out.push({ id: 'augFood', title: 'مقاضي العامل لشهر 8', detail: 'العثيم 116 + 15 + 15 = 146 تنتقل من 10 سبتمبر إلى 29 أغسطس (من ورقة أغسطس).' })
+  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge' || c.id === 'drop405' || c.id === 'dropOct' || c.id === 'aug' || c.id === 'augFood')
   if ((willChange || numbersOutOfOrder(entries)) && !entries.some((e) => e.serverUpdatedAt))
     out.push({ id: 'order', title: 'ترتيب الأرقام حسب التاريخ', detail: 'القيود تترقم 1، 2، 3… من الأقدم للأحدث.' })
   return out
@@ -439,6 +451,16 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
   if (ids.includes('aug') && !state.entries.some((e) => !e.deleted && e.date === '2026-08-10' && e.lines.some((l) => l.accountId === 'wages'))) {
     await addEntry({ ...seed.SALARY_AUG, number: undefined })
     n += 1
+  }
+  if (ids.includes('augFood')) {
+    const e = findSepWithAugFood()
+    if (e) {
+      const d = seed.ORIGINAL_JOURNAL.find((x) => x.date === '2026-09-10')!
+      await updateEntry(e.id, { ...d, number: undefined, flagged: e.flagged || d.flagged, flagNote: e.flagNote || d.flagNote })
+      if (!state.entries.some((x) => !x.deleted && x.date === '2026-08-29' && x.description.includes('العثيم')))
+        await addEntry({ ...seed.AUG_GROCERIES, number: undefined })
+      n += 1
+    }
   }
   if (ids.includes('ahmed') && !hasAhmed1000()) {
     const nov = findNovSalaries()
