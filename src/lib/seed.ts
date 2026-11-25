@@ -70,10 +70,12 @@ const numbered = (d: EntryDraft, n: number): EntryDraft => ({ ...d, number: n })
 /** توضيح الأب: راتب 1,000 أُعطي يوم 10/6 وراتب 1,000 يوم 10/7 — كل راتب في شهره */
 export const SALARY_JUNE: EntryDraft = entry(0, '2026-06-10', 'راتب العامل شهر 6', [['wages', 1000, 'راتب شهر 6']])
 export const SALARY_JULY: EntryDraft = entry(0, '2026-07-10', 'راتب العامل شهر 7', [['wages', 1000, 'راتب شهر 7']])
+export const SALARY_AUG: EntryDraft = entry(0, '2026-08-10', 'راتب العامل شهر 8', [['wages', 1000, 'راتب شهر 8']], 'أُضيف بطلبكم لأنه غير مكتوب بالدفتر. تأكد من التاريخ والمبلغ، ومقاضي العثيم لشهر 8 غير مسجّلة.')
 
 const JOURNAL: EntryDraft[] = [
   SALARY_JUNE,
   SALARY_JULY,
+  SALARY_AUG,
   ...AUGUST_SPLIT.map((d, i) => numbered(d, i + 1)),
   numbered(AUGUST_REMAINDER, 5),
   entry(
@@ -136,7 +138,6 @@ const JOURNAL: EntryDraft[] = [
       ['vet', 120, 'علاج دود شياه (2 علبة)'],
       ['vet', 60, 'شراب دود'],
       ['transport', 80, 'بنزين'],
-      ['wages', 115, 'جوال للعامل الإثيوبي'],
       ['wages', 33, 'مقاضي أحمد'],
       ['wages', 115, 'سوا'],
     ],
@@ -154,7 +155,6 @@ const JOURNAL: EntryDraft[] = [
     ['feed', 700, 'ذرة صفراء 10 أكياس'],
     ['feed', 200, 'سمسم 4 أكياس'],
     ['feed', 150, 'طاحونة'],
-    ['wages', 250, 'مكافأة أحمد'],
     ['wages', 25, 'عشاء أحمد'],
     ['transport', 120, 'بنزين'],
   ]),
@@ -189,7 +189,7 @@ export const ORIGINAL_JOURNAL: EntryDraft[] = [...JOURNAL].sort((a, b) => a.date
  * المجموع بعد تصحيح الأب: قيمة الحلال 148,000 (أول صفقة 102,420 + الثانية 45,580)
  * وليست 198,000 كما في الدفتر (الفرق 50,000) + راتبين 1,000 و 1,000.
  */
-export const ORIGINAL_TOTAL_HALALA = 249_914_00
+export const ORIGINAL_TOTAL_HALALA = 250_549_00
 
 export const ORIGINAL_NOTES = [
   'غير مسجّل: «راتب عامل 900 + 900» بصفحة 9/7 بدون تاريخ واضح — إذا انصرف أضفه كقيد جديد.',

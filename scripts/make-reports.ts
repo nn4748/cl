@@ -223,13 +223,6 @@ function workerHtml() {
     <div class="box"><div class="k">موعد استحقاق الراتب</div><div class="v">يوم 10 من كل شهر</div></div>
     <div class="box"><div class="k">مجموع ما أُعطي للعامل</div><div class="v num">${money(all)}</div></div></div>`
 
-  html += `<h2>الملخص شهر بشهر</h2><table><tr><th>الشهر</th>${CATS.map((c) => `<th class="n">${WORKER_CAT_LABEL[c]}</th>`).join('')}<th class="n">المجموع</th></tr>`
-  for (const m of months) {
-    const t = worker.filter((w) => w.date.startsWith(m)).reduce((s, w) => s + w.amount, 0)
-    html += `<tr><td>شهر ${Number(m.slice(5))} (${MONTHS[Number(m.slice(5)) - 1]})</td>${CATS.map((c) => `<td class="n num">${sumCat(m, c) ? money(sumCat(m, c)) : '—'}</td>`).join('')}<td class="n num"><b>${t ? money(t) : '—'}</b></td></tr>`
-  }
-  html += `<tr class="total"><td>المجموع</td>${CATS.map((c) => `<td class="n num">${money(worker.filter((w) => w.cat === c).reduce((s, w) => s + w.amount, 0))}</td>`).join('')}<td class="n num">${money(all)}</td></tr></table>`
-
   html += `<h2>الراتب: المستحق والمصروف</h2><div class="explain">الراتب المستحق 1,500 ريال يوم 10 من كل شهر: 1,000 نقداً + 500 مقاضي العثيم. «المصروف كراتب» = الراتب النقدي + مقاضي العثيم في ذلك الشهر.</div>
     <table><tr><th>الشهر</th><th>تاريخ الاستحقاق</th><th class="n">المستحق</th><th class="n">راتب نقدي</th><th class="n">مقاضي العثيم</th><th class="n">المصروف كراتب</th><th class="n">الفرق</th></tr>`
   let tDue = 0
@@ -263,7 +256,7 @@ function workerHtml() {
   }
   html += `<div class="grand"><span>مجموع ما أُعطي للعامل</span><span class="num">${money(all)} ريال</span></div>`
   html += `<div class="note"><b>للتأكيد:</b><ul>
-    <li>الراتب المستحق 1,500: منها 1,000 نقداً و 500 تُصرف مقاضي من العثيم (مسجّلة تحت «المقاضي والأكل»).</li><li>راتب أغسطس غير مسجّل.</li>
+    <li>الراتب المستحق 1,500: منها 1,000 نقداً و 500 تُصرف مقاضي من العثيم (مسجّلة تحت «المقاضي والأكل»).</li><li>راتب شهر 8 (1,000 بتاريخ 10 أغسطس) أُضيف لأنه غير مكتوب بالدفتر، ومقاضي العثيم لشهور 6 و 7 و 8 غير مسجّلة.</li>
     <li>سطر 25 أكتوبر «مقاضي أحمد 33 + سوا 115» عليه شطب بالدفتر الأصلي.</li></ul></div>`
   html += `<div class="foot">دفتر الحلال · أُعد بتاريخ ${longDate(new Date().toISOString().slice(0, 10))}</div>`
   return page('ملف العامل', html)
