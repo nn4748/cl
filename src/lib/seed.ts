@@ -67,13 +67,13 @@ export const AUGUST_REMAINDER: EntryDraft = entry(0, '2026-09-07', 'تجهيز �
 
 const numbered = (d: EntryDraft, n: number): EntryDraft => ({ ...d, number: n })
 
-/** تصحيح الأب: «من 10/6 إلى 10/7» = راتبين، 1,000 و 1,000 */
-export const AHMED_1000: EntryDraft = entry(0, '2026-11-20', 'راتبين (من 10/6 إلى 10/7)', [
-  ['wages', 1000, 'راتب 1,000 (من 10 جمادى الآخرة إلى 10 رجب)'],
-  ['wages', 1000, 'راتب 1,000 (من 10 جمادى الآخرة إلى 10 رجب)'],
-])
+/** توضيح الأب: راتب 1,000 أُعطي يوم 10/6 وراتب 1,000 يوم 10/7 — كل راتب في شهره */
+export const SALARY_JUNE: EntryDraft = entry(0, '2026-06-10', 'راتب العامل شهر 6', [['wages', 1000, 'راتب شهر 6']])
+export const SALARY_JULY: EntryDraft = entry(0, '2026-07-10', 'راتب العامل شهر 7', [['wages', 1000, 'راتب شهر 7']])
 
 const JOURNAL: EntryDraft[] = [
+  SALARY_JUNE,
+  SALARY_JULY,
   ...AUGUST_SPLIT.map((d, i) => numbered(d, i + 1)),
   numbered(AUGUST_REMAINDER, 5),
   entry(
@@ -185,12 +185,11 @@ const JOURNAL: EntryDraft[] = [
     ['feed', 120, 'طاحونة'],
     ['transport', 73, 'بنزين'],
   ]),
-  numbered(AHMED_1000, 19),
   entry(20, '2026-11-24', 'مقاضي العامل', [['wages', 266, 'مقاضي العامل']]),
 ]
 
 /** الأرقام تُعطى بالتسلسل حسب الترتيب الزمني */
-export const ORIGINAL_JOURNAL: EntryDraft[] = JOURNAL.map((d, i) => ({ ...d, number: i + 1 }))
+export const ORIGINAL_JOURNAL: EntryDraft[] = [...JOURNAL].sort((a, b) => a.date.localeCompare(b.date)).map((d, i) => ({ ...d, number: i + 1 }))
 
 /**
  * المجموع بعد تصحيح الأب: قيمة الحلال 148,000 (أول صفقة 102,420 + الثانية 45,580)
@@ -204,5 +203,5 @@ export const ORIGINAL_NOTES = [
   'مستبعد من الدفتر كل ما يخص أبو عمر.',
   'قيد 1 في الدفتر قُسّم على تواريخه الحقيقية من أوراق أغسطس. ورقة «الوطنية» حسابات خارج المشروع ولم تُدخل.',
   'تصحيح: قيمة الحلال 148,000 (أول صفقة 102,420 + 700 نقل، والثانية 45,580 + 700 نقل = 149,400) وليست 198,000 كما في الدفتر.',
-  'أُضيف راتبين 1,000 + 1,000 من 10 جمادى الآخرة إلى 10 رجب.',
+  'راتب العامل 1,000 يوم 10 يونيو و 1,000 يوم 10 يوليو، كل راتب في شهره.',
 ]

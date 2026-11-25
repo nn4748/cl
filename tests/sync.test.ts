@@ -216,7 +216,7 @@ describe('تصحيح الـ 50,000 على جهاز طُبّق عليه التف�
     const e = st.entries.find((x) => x.date === '2026-09-07')!
     expect(e.lines.reduce((s, l) => s + l.debit, 0)).toBe(3035500)
     expect(e.lines.reduce((s, l) => s + l.credit, 0)).toBe(3035500)
-    expect(st.entries.filter((x) => x.description.includes('راتبين'))).toHaveLength(1)
+    expect(st.entries.filter((x) => !x.deleted && x.description.includes('راتب العامل شهر'))).toHaveLength(2)
     expect(a.store.pendingCorrections()).toHaveLength(0)
   })
 })
@@ -247,20 +247,28 @@ describe('جهاز الأب: الدفتر القديم (14 قيد مجمّع) �
   })
 })
 
-describe('توضيح الأب: راتبين 1,000 و 1,000', () => {
-  it('يحوّل قيد «حساب أحمد 1,000» إلى راتبين بدون تكرار ويرتب الأرقام', async () => {
+describe('توضيح الأب: راتب 10/6 وراتب 10/7 في شهورهم', () => {
+  it('ينقل «راتبين» من نوفمبر إلى يونيو ويوليو بدون تكرار ويرتب الأرقام', async () => {
     const a = await device()
-    const w = (r: number, date: string, d = 'قيد') => ({ date, description: d, type: 'wages' as const, lines: [{ accountId: 'wages', debit: r * 100, credit: 0 }, { accountId: 'cash', debit: 0, credit: r * 100 }] })
-    await a.store.addEntry(w(1000, '2026-11-20', 'حساب أحمد (من 10/6 إلى 10/7)'))
-    await a.store.addEntry(w(500, '2026-09-01'))
-    expect(a.store.numbersOutOfOrder()).toBe(true)
+    await a.store.addEntry({
+      date: '2026-11-20',
+      description: 'راتبين (من 10/6 إلى 10/7)',
+      type: 'wages',
+      lines: [
+        { accountId: 'wages', debit: 100000, credit: 0 },
+        { accountId: 'wages', debit: 100000, credit: 0 },
+        { accountId: 'cash', debit: 0, credit: 200000 },
+      ],
+    })
+    await a.store.addEntry({ date: '2026-09-01', description: 'قيد', type: 'wages', lines: [{ accountId: 'wages', debit: 50000, credit: 0 }, { accountId: 'cash', debit: 0, credit: 50000 }] })
     await a.store.applyCorrections(a.store.pendingCorrections().map((c) => c.id))
     const live = a.store.getState().entries.filter((e) => !e.deleted)
-    expect(live).toHaveLength(2)
-    const sal = live.find((e) => e.date === '2026-11-20')!
-    expect(sal.lines.filter((l) => l.accountId === 'wages').map((l) => l.debit)).toEqual([100000, 100000])
-    expect(sal.number).toBe(2)
-    expect(live.find((e) => e.date === '2026-09-01')!.number).toBe(1)
+    expect(live).toHaveLength(3)
+    expect(live.filter((e) => e.date.startsWith('2026-11'))).toHaveLength(0)
+    const sal = live.filter((e) => e.lines.some((l) => l.accountId === 'wages' && l.debit === 100000)).map((e) => [e.date, e.number])
+    expect(sal.sort()).toEqual([['2026-06-10', 1], ['2026-07-10', 2]])
+    const wages = live.flatMap((e) => e.lines).filter((l) => l.accountId === 'wages').reduce((s, l) => s + l.debit, 0)
+    expect(wages).toBe(250000)
     expect(a.store.pendingCorrections()).toHaveLength(0)
   })
 })

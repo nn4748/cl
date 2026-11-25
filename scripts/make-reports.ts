@@ -199,11 +199,14 @@ function workerHtml() {
       const p = splitNote(i.note || i.description)[0]
       return { ...i, label: i.note || i.description, cat: (p?.cat ?? 'other') as WorkerCat }
     })
-  const months = ['2026-08', '2026-09', '2026-10', '2026-11']
+  const first = worker.map((w) => w.date.slice(0, 7)).sort()[0]
+  const last = '2026-11'
+  const months: string[] = []
+  for (let [y, m] = first.split('-').map(Number); `${y}-${String(m).padStart(2, '0')}` <= last; m === 12 ? ((m = 1), y++) : m++) months.push(`${y}-${String(m).padStart(2, '0')}`)
   const sumCat = (m: string, c: WorkerCat) => worker.filter((w) => w.date.startsWith(m) && w.cat === c).reduce((s, w) => s + w.amount, 0)
   const all = worker.reduce((s, w) => s + w.amount, 0)
 
-  let html = `<div class="head"><div><h1>ملف العامل</h1><div class="sub">مشروع الحلال · من أغسطس إلى نوفمبر 2026</div></div><div class="sub">المبالغ بالريال السعودي</div></div>`
+  let html = `<div class="head"><div><h1>ملف العامل</h1><div class="sub">مشروع الحلال · من ${MONTHS[Number(months[0].slice(5)) - 1]} إلى ${MONTHS[Number(months.at(-1)!.slice(5)) - 1]} 2026</div></div><div class="sub">المبالغ بالريال السعودي</div></div>`
   html += `<div class="boxes">
     <div class="box dark"><div class="k">الراتب الشهري</div><div class="v num">${money(SALARY)}</div></div>
     <div class="box"><div class="k">موعد استحقاق الراتب</div><div class="v">يوم 10 من كل شهر</div></div>
@@ -239,7 +242,7 @@ function workerHtml() {
   }
   html += `<div class="grand"><span>مجموع ما أُعطي للعامل</span><span class="num">${money(all)} ريال</span></div>`
   html += `<div class="note"><b>للتأكيد:</b><ul>
-    <li>الرواتب المسجّلة بالدفتر: 1,500 (10 سبتمبر)، 1,500 (8 أكتوبر)، 1,350 (10 نوفمبر)، وراتبين 1,000 + 1,000 (20 نوفمبر، من 10/6 إلى 10/7). إذا كان الراتب 1,000 فالزيادة قد تكون سلفة أو لعامل ثاني.</li>
+    <li>الرواتب المسجّلة: 1,000 (10 يونيو)، 1,000 (10 يوليو)، 1,500 (10 سبتمبر)، 1,500 (8 أكتوبر)، 1,350 (10 نوفمبر). إذا كان الراتب 1,000 فالزيادة قد تكون سلفة أو لعامل ثاني. وراتب أغسطس غير مسجّل.</li>
     <li>سطر 25 أكتوبر «مقاضي أحمد 33 + سوا 115» عليه شطب بالدفتر الأصلي.</li></ul></div>`
   html += `<div class="foot">دفتر الحلال · أُعد بتاريخ ${longDate(new Date().toISOString().slice(0, 10))}</div>`
   return page('ملف العامل', html)

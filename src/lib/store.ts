@@ -251,17 +251,21 @@ function findDeposit(entries: Entry[] = state.entries) {
   return dep && transfer ? { dep, transfer } : undefined
 }
 
-const TWO_SALARIES = (e: Entry) => !e.deleted && e.date === '2026-11-20' && e.lines.filter((l) => l.accountId === 'wages' && l.debit === 1_000_00).length >= 2
+const isSalary1000 = (e: Entry, date: string) => !e.deleted && e.date === date && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00)
 
-/** القيد القديم: حساب أحمد 1,000 بسطر واحد (قبل توضيح الأب أنهما راتبين) */
-function findOldAhmed(entries: Entry[] = state.entries): Entry | undefined {
+/** الصيغ القديمة لراتبي 10/6 و 10/7 في نوفمبر: «راتبين» بسطرين، أو «حساب أحمد 1,000» */
+function findNovSalaries(entries: Entry[] = state.entries): Entry | undefined {
   return entries.find(
-    (e) => !e.deleted && e.description.includes('أحمد') && e.date >= '2026-11-15' && e.lines.length === 2 && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00),
+    (e) =>
+      !e.deleted &&
+      e.date >= '2026-11-15' &&
+      (e.description.includes('راتبين') || e.description.includes('حساب أحمد')) &&
+      e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00),
   )
 }
 
 export function hasAhmed1000(entries: Entry[] = state.entries): boolean {
-  return entries.some(TWO_SALARIES)
+  return entries.some((e) => isSalary1000(e, '2026-06-10')) && entries.some((e) => isSalary1000(e, '2026-07-10')) && !findNovSalaries(entries)
 }
 
 /** هل أرقام القيود لا تتبع ترتيب التواريخ؟ */
@@ -333,7 +337,7 @@ export function pendingCorrections(entries: Entry[] = state.entries, dismissed: 
   if (findDeposit(entries))
     out.push({ id: 'merge', title: 'أول صفقة حلال بند واحد 102,420', detail: 'العربون 5,000 والتحويل 97,420 يصيرون بند واحد «قيمة أول صفقة» 102,420 بتاريخ 13 أغسطس.' })
   if (!hasAhmed1000(entries) && !dismissed.includes('ahmed') && entries.length > 0)
-    out.push({ id: 'ahmed', title: 'راتبين 1,000 + 1,000', detail: 'من 10 جمادى الآخرة إلى 10 رجب (بتاريخ 20 نوفمبر).' })
+    out.push({ id: 'ahmed', title: 'راتب العامل في شهوره', detail: 'راتب 1,000 يوم 10 يونيو وراتب 1,000 يوم 10 يوليو، وتنحذف من نوفمبر.' })
   const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge')
   if ((willChange || numbersOutOfOrder(entries)) && !entries.some((e) => e.serverUpdatedAt))
     out.push({ id: 'order', title: 'ترتيب الأرقام حسب التاريخ', detail: 'القيود تترقم 1، 2، 3… من الأقدم للأحدث.' })
@@ -395,9 +399,11 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
     }
   }
   if (ids.includes('ahmed') && !hasAhmed1000()) {
-    const old = findOldAhmed()
-    if (old) await updateEntry(old.id, { ...seed.AHMED_1000, number: undefined })
-    else await addEntry({ ...seed.AHMED_1000, number: undefined })
+    const nov = findNovSalaries()
+    // نحوّل القيد الموجود في نوفمبر إلى راتب يونيو (بدل حذفه) ثم نضيف يوليو — بدون تكرار
+    if (nov) await updateEntry(nov.id, { ...seed.SALARY_JUNE, number: undefined })
+    else if (!state.entries.some((e) => isSalary1000(e, '2026-06-10'))) await addEntry({ ...seed.SALARY_JUNE, number: undefined })
+    if (!state.entries.some((e) => isSalary1000(e, '2026-07-10'))) await addEntry({ ...seed.SALARY_JULY, number: undefined })
     n += 1
   }
   if (ids.includes('order') && numbersOutOfOrder()) {
