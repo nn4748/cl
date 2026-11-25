@@ -202,6 +202,7 @@ function journalHtml() {
 // ═════════════ 2) ملف العامل ═════════════
 function workerHtml() {
   const SALARY = 1000_00
+  const DUE = 1500_00
   const CATS: WorkerCat[] = ['salary', 'phone', 'food', 'bonus', 'other']
   const worker = items
     .filter((i) => i.accountId === 'wages')
@@ -218,7 +219,7 @@ function workerHtml() {
 
   let html = `<div class="head"><div><h1>ملف العامل</h1><div class="sub">مشروع الحلال · من ${MONTHS[Number(months[0].slice(5)) - 1]} إلى ${MONTHS[Number(months.at(-1)!.slice(5)) - 1]} 2026</div></div><div class="sub">المبالغ بالريال السعودي</div></div>`
   html += `<div class="boxes">
-    <div class="box dark"><div class="k">الراتب الشهري</div><div class="v num">${money(SALARY)}</div></div>
+    <div class="box dark"><div class="k">الراتب المستحق شهرياً</div><div class="v"><span class="num">${money(DUE)}</span> <span style="font-size:10pt;color:#d8c3a5">(${money(SALARY)} نقداً + 500 مقاضي العثيم)</span></div></div>
     <div class="box"><div class="k">موعد استحقاق الراتب</div><div class="v">يوم 10 من كل شهر</div></div>
     <div class="box"><div class="k">مجموع ما أُعطي للعامل</div><div class="v num">${money(all)}</div></div></div>`
 
@@ -229,13 +230,23 @@ function workerHtml() {
   }
   html += `<tr class="total"><td>المجموع</td>${CATS.map((c) => `<td class="n num">${money(worker.filter((w) => w.cat === c).reduce((s, w) => s + w.amount, 0))}</td>`).join('')}<td class="n num">${money(all)}</td></tr></table>`
 
-  html += `<h2>الرواتب: المستحق والمصروف</h2><div class="explain">الراتب 1,000 ريال ويستحق يوم 10 من كل شهر. «المصروف كراتب» هو المسجّل بالدفتر تحت اسم راتب في ذلك الشهر.</div>
-    <table><tr><th>الشهر</th><th>تاريخ الاستحقاق</th><th class="n">الراتب المستحق</th><th class="n">المصروف كراتب</th></tr>`
+  html += `<h2>الراتب: المستحق والمصروف</h2><div class="explain">الراتب المستحق 1,500 ريال يوم 10 من كل شهر: 1,000 نقداً + 500 مقاضي العثيم. «المصروف كراتب» = الراتب النقدي + مقاضي العثيم في ذلك الشهر.</div>
+    <table><tr><th>الشهر</th><th>تاريخ الاستحقاق</th><th class="n">المستحق</th><th class="n">راتب نقدي</th><th class="n">مقاضي العثيم</th><th class="n">المصروف كراتب</th><th class="n">الفرق</th></tr>`
+  let tDue = 0
+  let tPaid = 0
   for (const m of months) {
     const due = `${m}-10`
-    html += `<tr><td>شهر ${Number(m.slice(5))}</td><td>${dayName(due)} ${longDate(due)}</td><td class="n num">${money(SALARY)}</td><td class="n num">${sumCat(m, 'salary') ? money(sumCat(m, 'salary')) : '—'}</td></tr>`
+    const cash = sumCat(m, 'salary')
+    const food = sumCat(m, 'food')
+    const paid = cash + food
+    const diff = paid - DUE
+    tDue += DUE
+    tPaid += paid
+    html += `<tr><td>شهر ${Number(m.slice(5))}</td><td style="white-space:nowrap">${longDate(due)}</td><td class="n num">${money(DUE)}</td><td class="n num">${cash ? money(cash) : '—'}</td><td class="n num">${food ? money(food) : '—'}</td><td class="n num"><b>${paid ? money(paid) : '—'}</b></td><td class="n">${diff === 0 ? '✓' : diff > 0 ? `<span class="num">+${money(diff)}</span> زيادة` : `<span class="num">${money(-diff)}</span> باقي`}</td></tr>`
   }
-  html += `</table>`
+  const tDiff = tPaid - tDue
+  html += `<tr class="total"><td colspan="2">المجموع</td><td class="n num">${money(tDue)}</td><td></td><td></td><td class="n num">${money(tPaid)}</td><td class="n">${tDiff >= 0 ? `<span class="num">+${money(tDiff)}</span> زيادة` : `<span class="num">${money(-tDiff)}</span> باقي`}</td></tr></table>
+  <div class="explain">«باقي» يعني المصروف المسجّل أقل من 1,500 في ذلك الشهر (قد تكون مقاضي غير مسجّلة)، و«زيادة» يعني أكثر.</div>`
 
   html += `<h2 class="pb">التفصيل شهر بشهر</h2>`
   for (const m of months) {
@@ -252,7 +263,7 @@ function workerHtml() {
   }
   html += `<div class="grand"><span>مجموع ما أُعطي للعامل</span><span class="num">${money(all)} ريال</span></div>`
   html += `<div class="note"><b>للتأكيد:</b><ul>
-    <li>الراتب 1,000 ريال، وما زاد عنه (مثل 500 من الـ 1,500) يُصرف للعامل مقاضي ومصاريف، ومسجّل تحت «المقاضي والأكل».</li><li>راتب أغسطس غير مسجّل.</li><li>يوم 11 نوفمبر: 55 و 350 مصروفة للعامل من حساب شهر 11، تأكد أن الـ 350 ليست نفس باقي الـ 1,350.</li>
+    <li>الراتب المستحق 1,500: منها 1,000 نقداً و 500 تُصرف مقاضي من العثيم (مسجّلة تحت «المقاضي والأكل»).</li><li>راتب أغسطس غير مسجّل.</li><li>يوم 11 نوفمبر: 55 و 350 مصروفة للعامل من حساب شهر 11، تأكد أن الـ 350 ليست نفس باقي الـ 1,350.</li>
     <li>سطر 25 أكتوبر «مقاضي أحمد 33 + سوا 115» عليه شطب بالدفتر الأصلي.</li></ul></div>`
   html += `<div class="foot">دفتر الحلال · أُعد بتاريخ ${longDate(new Date().toISOString().slice(0, 10))}</div>`
   return page('ملف العامل', html)

@@ -73,7 +73,7 @@ export type WorkerCat = 'salary' | 'phone' | 'food' | 'bonus' | 'other'
 export const WORKER_CAT_LABEL: Record<WorkerCat, string> = {
   salary: 'الراتب',
   phone: 'سوا والجوال',
-  food: 'المقاضي والأكل',
+  food: 'مقاضي العثيم والأكل',
   bonus: 'المكافآت',
   other: 'مصاريف أخرى',
 }
