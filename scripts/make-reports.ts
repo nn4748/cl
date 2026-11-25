@@ -133,7 +133,7 @@ function journalHtml() {
     const dayTotal = list.reduce((s, i) => s + i.amount, 0)
     run += dayTotal
     html += `<div class="day"><div class="dayhead"><span>${dayName(date)} ${longDate(date)}</span><span class="h">${hijri(date)}</span></div>
-      <table><tr><th>ما اشتُري / صُرف</th><th>الباب</th><th class="n">السعر</th></tr>`
+      <table><tr><th>ما اشتُري / صُرف (والعامل)</th><th>الباب</th><th class="n">السعر</th></tr>`
     for (const it of list) html += `<tr><td>${esc(it.note || it.description)}</td><td class="tag">${SHORT_ACC[it.accountId] ?? ''}</td><td class="n num">${money(it.amount)}</td></tr>`
     html += `<tr class="total"><td colspan="2">مجموع اليوم</td><td class="n num">${money(dayTotal)}</td></tr>
       <tr class="run"><td colspan="2">المجموع من البداية حتى هذا اليوم</td><td class="n num">${money(run)}</td></tr></table></div>`
@@ -179,7 +179,17 @@ function journalHtml() {
     for (const it of list) html += `<tr><td style="white-space:nowrap">${longDate(it.date)}</td><td>${esc(it.note || it.description)}</td><td class="n num">${money(it.amount)}</td></tr>`
     html += `<tr class="total"><td colspan="2">المجموع</td><td class="n num">${money(sum)}</td></tr></table></div>`
   }
-  html += `<p class="muted">العامل: تفصيله كامل في الملف الثاني «ملف العامل».</p>`
+  // العامل داخل دفتر اليومية أيضاً
+  {
+    const list = items.filter((i) => i.accountId === 'wages')
+    const sum = list.reduce((s, i) => s + i.amount, 0)
+    html += `<div class="day"><h3>العامل (رواتب ومصاريف) · ${money(sum)} ريال</h3><table><tr><th>التاريخ</th><th>وش عطيناه</th><th>النوع</th><th class="n">المبلغ</th></tr>`
+    for (const it of list) {
+      const cat = splitNote(it.note || it.description)[0]?.cat ?? 'other'
+      html += `<tr><td style="white-space:nowrap">${longDate(it.date)}</td><td>${esc(it.note || it.description)}</td><td class="tag">${WORKER_CAT_LABEL[cat]}</td><td class="n num">${money(it.amount)}</td></tr>`
+    }
+    html += `<tr class="total"><td colspan="3">المجموع</td><td class="n num">${money(sum)}</td></tr></table></div>`
+  }
 
   const flagged = entries.filter((e) => e.flagged && e.flagNote)
   if (flagged.length) {
