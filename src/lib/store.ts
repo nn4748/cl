@@ -251,6 +251,17 @@ function findDeposit(entries: Entry[] = state.entries) {
   return dep && transfer ? { dep, transfer } : undefined
 }
 
+/** 55 و 350 يوم 11 نوفمبر — طلب الأب حذفها */
+function find405(entries: Entry[] = state.entries): Entry | undefined {
+  return entries.find(
+    (e) =>
+      !e.deleted &&
+      e.date === '2026-11-11' &&
+      e.lines.reduce((s, l) => s + l.debit, 0) === 405_00 &&
+      e.lines.every((l) => l.debit === 0 || l.accountId === 'wages'),
+  )
+}
+
 const isSalary1000 = (e: Entry, date: string) => !e.deleted && e.date === date && e.lines.some((l) => l.accountId === 'wages' && l.debit === 1_000_00)
 
 /** الصيغ القديمة لراتبي 10/6 و 10/7 في نوفمبر: «راتبين» بسطرين، أو «حساب أحمد 1,000» */
@@ -319,7 +330,7 @@ export async function findDetailUpgrades(entries: Entry[] = state.entries): Prom
 }
 
 export interface Correction {
-  id: 'split' | 'extra50k' | 'merge' | 'ahmed' | 'detail' | 'order'
+  id: 'split' | 'extra50k' | 'merge' | 'ahmed' | 'drop405' | 'detail' | 'order'
   title: string
   detail: string
 }
@@ -338,7 +349,8 @@ export function pendingCorrections(entries: Entry[] = state.entries, dismissed: 
     out.push({ id: 'merge', title: 'أول صفقة حلال بند واحد 102,420', detail: 'العربون 5,000 والتحويل 97,420 يصيرون بند واحد «قيمة أول صفقة» 102,420 بتاريخ 13 أغسطس.' })
   if (!hasAhmed1000(entries) && !dismissed.includes('ahmed') && entries.length > 0)
     out.push({ id: 'ahmed', title: 'راتب العامل في شهوره', detail: 'راتب 1,000 يوم 10 يونيو وراتب 1,000 يوم 10 يوليو، وتنحذف من نوفمبر.' })
-  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge')
+  if (find405(entries)) out.push({ id: 'drop405', title: 'حذف 55 و 350 (11 نوفمبر)', detail: 'مصروف العامل يوم 11 نوفمبر (405) ينحذف حسب طلب الأب.' })
+  const willChange = out.some((c) => c.id === 'split' || c.id === 'ahmed' || c.id === 'merge' || c.id === 'drop405')
   if ((willChange || numbersOutOfOrder(entries)) && !entries.some((e) => e.serverUpdatedAt))
     out.push({ id: 'order', title: 'ترتيب الأرقام حسب التاريخ', detail: 'القيود تترقم 1، 2، 3… من الأقدم للأحدث.' })
   return out
@@ -389,6 +401,13 @@ export async function applyCorrections(ids: Correction['id'][]): Promise<number>
       )
       await updateEntry(f.transfer.id, { date: f.transfer.date, description: 'أول صفقة حلال + أعلاف وعلاج', type: f.transfer.type, lines, flagged: f.transfer.flagged, flagNote: f.transfer.flagNote })
       await setDeleted(f.dep.id, true)
+      n += 1
+    }
+  }
+  if (ids.includes('drop405')) {
+    const e = find405()
+    if (e) {
+      await setDeleted(e.id, true)
       n += 1
     }
   }

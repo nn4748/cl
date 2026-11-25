@@ -239,7 +239,7 @@ describe('جهاز الأب: الدفتر القديم (14 قيد مجمّع) �
     const lineCount = (es: { lines: unknown[] }[]) => es.reduce((s, e) => s + e.lines.length, 0)
     expect(lineCount(live)).toBe(lineCount(expected))
     const bal = Object.fromEntries(byAccount(live, st.accounts).map((x) => [x.account.id, x.balance / 100]))
-    expect(bal).toMatchObject({ livestock: 148000, feed: 52569, wages: 7953, cash: -249938 })
+    expect(bal).toMatchObject({ livestock: 148000, feed: 52569, wages: 7548, cash: -249533 })
     const nums = [...live].sort((x, y) => x.date.localeCompare(y.date) || x.number - y.number).map((e) => e.number)
     expect(nums).toEqual(nums.map((_, i) => i + 1))
     expect(await a.store.findDetailUpgrades()).toHaveLength(0)

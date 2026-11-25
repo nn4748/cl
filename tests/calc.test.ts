@@ -39,7 +39,7 @@ describe('دفتر مشروع الحلال الأصلي', () => {
     expect(t.debit).toBe(ORIGINAL_TOTAL_HALALA)
     expect(t.credit).toBe(0)
     expect(t.balance).toBe(ORIGINAL_TOTAL_HALALA)
-    expect(t.count).toBe(21)
+    expect(t.count).toBe(20)
     expect(t.ledgerBalanced).toBe(true)
     expect(t.cashBalance).toBe(-ORIGINAL_TOTAL_HALALA)
   })
@@ -51,12 +51,12 @@ describe('دفتر مشروع الحلال الأصلي', () => {
       well: 18050,
       rent: 10000,
       equipment: 7053,
-      wages: 8334,
+      wages: 7929,
       vet: 3315,
       transport: 2573,
       maintenance: 320,
       misc: 105,
-      cash: -250319,
+      cash: -249914,
     })
   })
   it('الرصيد التراكمي ينتهي بالمجموع', () => {
