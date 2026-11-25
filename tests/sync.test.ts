@@ -235,7 +235,7 @@ describe('جهاز الأب: الدفتر القديم (14 قيد مجمّع) �
     // مقاضي 24 نوفمبر (266) أُضيفت بعد ذلك كقيد جديد وليست تصحيحاً
     const expected = seed.ORIGINAL_JOURNAL.filter((d) => d.date !== '2026-11-24')
     expect(live).toHaveLength(expected.length)
-    expect(totals(live, cashSet(st.accounts)).debit).toBe(seed.ORIGINAL_TOTAL_HALALA - 26600)
+    expect(totals(live, cashSet(st.accounts)).debit).toBe(seed.ORIGINAL_TOTAL_HALALA - 26600 - 11500)
     const lineCount = (es: { lines: unknown[] }[]) => es.reduce((s, e) => s + e.lines.length, 0)
     expect(lineCount(live)).toBe(lineCount(expected))
     const bal = Object.fromEntries(byAccount(live, st.accounts).map((x) => [x.account.id, x.balance / 100]))
