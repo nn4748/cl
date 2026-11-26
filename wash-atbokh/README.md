@@ -41,5 +41,5 @@ Installable (manifest, icons, maskable icons, iOS meta) with a Workbox service w
 
 ## Deploy to Netlify
 
-`netlify.toml` is included. In Netlify: **Add new site → Import from Git →** this repo, set **Base directory** to `wash-atbokh`, then **Site configuration → Change site name** to `washatbokh` → `https://washatbokh.netlify.app`.
+`netlify.toml` at the repo root already points Netlify at `wash-atbokh/`. In Netlify: **Add new site → Import from Git →** this repo, set the branch to `claude/peaceful-volta-aabcxy` (the default branch only has the other app), then **Site configuration → Change site name** to `washatbokh` → `https://washatbokh.netlify.app`.
 Or drag the built `dist/` folder onto https://app.netlify.com/drop.
