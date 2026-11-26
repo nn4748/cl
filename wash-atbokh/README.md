@@ -34,3 +34,12 @@ Home → **My kitchen** (type ingredients with autocomplete, or pick a photo —
 - **Photo detection is a demo.** No image-recognition service is connected; the UI says so. The photo stays in the browser (object URL only) and is never uploaded or stored.
 - No accounts, payments, delivery, analytics or backend. State lives in `sessionStorage` for the current tab session.
 - "Lighter" is a general style tag, not a nutritional claim.
+
+## PWA
+
+Installable (manifest, icons, maskable icons, iOS meta) with a Workbox service worker that precaches the app shell, fonts and recipe data — the whole journey works offline after the first visit. Updates apply automatically.
+
+## Deploy to Netlify
+
+`netlify.toml` is included. In Netlify: **Add new site → Import from Git →** this repo, set **Base directory** to `wash-atbokh`, then **Site configuration → Change site name** to `washatbokh` → `https://washatbokh.netlify.app`.
+Or drag the built `dist/` folder onto https://app.netlify.com/drop.
